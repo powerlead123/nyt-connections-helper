@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn about the NYT Connections game and how our AI helper can assist you in solving daily puzzles.">
+    <meta name="keywords" content="NYT Connections rules, Connections game help, how to play NYT Connections">
+    <title>About NYT Connections Helper - Game Rules and Website Info</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Preconnect to Google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="flex items-center gap-3">
+                <img src="assets/nyt-connections-logo.png" alt="NYT Connections Logo" class="w-12 h-12 md:w-16 md:h-16 object-contain">
+                <h1>NYT Connections Helper</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Today's Puzzle</a></li>
+                    <li><a href="archive.html">Past Puzzles</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="about-page">
+        <section class="about-section">
+            <h2>About NYT Connections Helper</h2>
+            <div class="about-content">
+                <p>Welcome to NYT Connections Helper, your AI-powered assistant for solving the daily New York Times Connections puzzle!</p>
+                
+                <p>Our website offers:</p>
+                <ul>
+                    <li>Daily updated puzzles synchronized with the NYT Connections game</li>
+                    <li>Interactive gameplay with AI-assisted hints</li>
+                    <li>Archive of past puzzles with solutions</li>
+                    <li>Detailed analysis and strategies for each day's puzzle</li>
+                </ul>
+                
+                <p>Whether you're stuck on a difficult category or just want some guidance, our AI assistant can provide helpful hints without spoiling the fun of solving the puzzle yourself.</p>
+                
+                <p><strong>Note:</strong> This website is not affiliated with or endorsed by The New York Times. It is an independent fan project created to help puzzle enthusiasts enjoy the Connections game.</p>
+            </div>
+        </section>
+
+        <section class="rules-section">
+            <h2>How to Play NYT Connections</h2>
+            <div class="rules-content">
+                <h3>Game Objective</h3>
+                <p>The goal of NYT Connections is to find four groups of four related words from a grid of 16 words. Each group has a specific theme or connection that ties the four words together.</p>
+                
+                <h3>Basic Rules</h3>
+                <ol>
+                    <li>Select four words that you believe share a connection</li>
+                    <li>Submit your selection to check if they form a valid group</li>
+                    <li>If correct, the group will be removed from the grid and its category revealed</li>
+                    <li>If incorrect, you'll lose one of your limited attempts</li>
+                    <li>Continue until you've found all four groups or run out of attempts</li>
+                </ol>
+                
+                <h3>Difficulty Levels</h3>
+                <p>The four categories in each puzzle typically follow a difficulty pattern:</p>
+                <ul>
+                    <li><span class="yellow-text">Yellow</span>: Easiest connection, usually straightforward</li>
+                    <li><span class="green-text">Green</span>: Medium difficulty</li>
+                    <li><span class="blue-text">Blue</span>: More challenging connection</li>
+                    <li><span class="purple-text">Purple</span>: Hardest connection, often involving wordplay or obscure relationships</li>
+                </ul>
+                
+                <h3>Tips for Success</h3>
+                <ul>
+                    <li>Start by looking for the most obvious connections</li>
+                    <li>Consider different ways words might be related (categories, synonyms, parts of phrases, etc.)</li>
+                    <li>Use the process of elimination</li>
+                    <li>Don't hesitate to use our AI hints if you get stuck!</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="contact-section">
+            <h2>Contact Us</h2>
+            <p>Have suggestions, feedback, or found a bug? We'd love to hear from you!</p>
+            <p>Email: <a href="mailto:contact@nytconnections.com">contact@nytconnections.com</a></p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; <span id="current-year"></span> NYT Connections Helper. Not affiliated with The New York Times.</p>
+            <p>This site uses AI to help with the daily NYT Connections puzzle.</p>
+            <div class="footer-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Use</a>
+                <a href="contact.html">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Set current year in footer
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html> 

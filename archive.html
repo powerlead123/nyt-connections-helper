@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Browse and play past NYT Connections puzzles with AI assistance. Access our archive of previous puzzles and solutions.">
+    <meta name="keywords" content="NYT Connections archive, past puzzles, previous Connections games">
+    <title>NYT Connections Archive - Past Puzzles with Solutions</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Preconnect to Google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>
+        /* Additional styles specific to archive page */
+        .archive-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .puzzle-card {
+            background-color: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            transition: transform var(--transition-speed);
+        }
+        
+        .puzzle-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .puzzle-date {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .puzzle-preview {
+            margin: 1rem 0;
+        }
+        
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 1rem;
+        }
+        
+        .preview-tile {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .puzzle-difficulty {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .difficulty-label {
+            margin-right: 0.5rem;
+        }
+        
+        .difficulty-meter {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .difficulty-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ddd;
+        }
+        
+        .difficulty-dot.active {
+            background-color: var(--accent-color);
+        }
+        
+        .puzzle-link {
+            display: block;
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 0.8rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            margin-top: 1rem;
+            transition: background-color var(--transition-speed);
+        }
+        
+        .puzzle-link:hover {
+            background-color: var(--primary-dark);
+            text-decoration: none;
+        }
+        
+        /* Filter controls */
+        .archive-filters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .filter-label {
+            font-weight: 500;
+        }
+        
+        .filter-select {
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #ddd;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .pagination-button {
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+            border-radius: var(--border-radius);
+            background-color: white;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        
+        .pagination-button:hover {
+            background-color: var(--secondary-bg);
+        }
+        
+        .pagination-button.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        @media (max-width: 768px) {
+            .archive-filters {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filter-group {
+                width: 100%;
+            }
+            
+            .filter-select {
+                flex-grow: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="flex items-center gap-3">
+                <img src="assets/nyt-connections-logo.png" 
+                     alt="NYT Connections Logo" 
+                     class="w-12 h-12 md:w-16 md:h-16 object-contain">
+                <h1>NYT Connections Helper</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Today's Puzzle</a></li>
+                    <li><a href="archive.html">Past Puzzles</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="archive-page">
+        <h2 class="page-title">Connections Puzzle Archive</h2>
+        
+        <div class="archive-filters">
+            <div class="filter-group">
+                <span class="filter-label">Month:</span>
+                <select class="filter-select" id="month-filter">
+                    <option value="all">All Months</option>
+                    <option value="2023-11">November 2023</option>
+                    <option value="2023-10">October 2023</option>
+                    <option value="2023-09">September 2023</option>
+                    <option value="2023-08">August 2023</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Difficulty:</span>
+                <select class="filter-select" id="difficulty-filter">
+                    <option value="all">All Difficulties</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Sort by:</span>
+                <select class="filter-select" id="sort-filter">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="easiest">Easiest First</option>
+                    <option value="hardest">Hardest First</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="archive-grid">
+            <!-- Sample puzzle cards - in production these would be dynamically generated -->
+            <div class="puzzle-card">
+                <div class="puzzle-date">November 12, 2023</div>
+                <div class="puzzle-difficulty">
+                    <span class="difficulty-label">Difficulty:</span>
+                    <div class="difficulty-meter">
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot"></div>
+                        <div class="difficulty-dot"></div>
+                    </div>
+                </div>
+                <div class="puzzle-preview">
+                    <div class="preview-grid">
+                        <div class="preview-tile">CAKE</div>
+                        <div class="preview-tile">BREAD</div>
+                        <div class="preview-tile">LION</div>
+                        <div class="preview-tile">SUIT</div>
+                        <!-- Only showing partial grid in preview -->
+                    </div>
+                    <p>Categories: Baked Goods, Animals, Clothing Items, Playing Cards</p>
+                </div>
+                <a href="#" class="puzzle-link">Play This Puzzle</a>
+            </div>
+            
+            <div class="puzzle-card">
+                <div class="puzzle-date">November 11, 2023</div>
+                <div class="puzzle-difficulty">
+                    <span class="difficulty-label">Difficulty:</span>
+                    <div class="difficulty-meter">
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot"></div>
+                    </div>
+                </div>
+                <div class="puzzle-preview">
+                    <div class="preview-grid">
+                        <div class="preview-tile">CASTLE</div>
+                        <div class="preview-tile">KNIGHT</div>
+                        <div class="preview-tile">OCEAN</div>
+                        <div class="preview-tile">DOLLAR</div>
+                        <!-- Only showing partial grid in preview -->
+                    </div>
+                    <p>Categories: Chess Pieces, Natural Landscapes, Currencies, Car Manufacturers</p>
+                </div>
+                <a href="#" class="puzzle-link">Play This Puzzle</a>
+            </div>
+            
+            <div class="puzzle-card">
+                <div class="puzzle-date">November 10, 2023</div>
+                <div class="puzzle-difficulty">
+                    <span class="difficulty-label">Difficulty:</span>
+                    <div class="difficulty-meter">
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                    </div>
+                </div>
+                <div class="puzzle-preview">
+                    <div class="preview-grid">
+                        <div class="preview-tile">RED</div>
+                        <div class="preview-tile">BLUE</div>
+                        <div class="preview-tile">WALK</div>
+                        <div class="preview-tile">PASS</div>
+                        <!-- Only showing partial grid in preview -->
+                    </div>
+                    <p>Categories: Colors, Traffic Signals, Actions in Sports, Computer Terms</p>
+                </div>
+                <a href="#" class="puzzle-link">Play This Puzzle</a>
+            </div>
+            
+            <div class="puzzle-card">
+                <div class="puzzle-date">November 9, 2023</div>
+                <div class="puzzle-difficulty">
+                    <span class="difficulty-label">Difficulty:</span>
+                    <div class="difficulty-meter">
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot"></div>
+                        <div class="difficulty-dot"></div>
+                        <div class="difficulty-dot"></div>
+                    </div>
+                </div>
+                <div class="puzzle-preview">
+                    <div class="preview-grid">
+                        <div class="preview-tile">APPLE</div>
+                        <div class="preview-tile">ORANGE</div>
+                        <div class="preview-tile">MONDAY</div>
+                        <div class="preview-tile">JULY</div>
+                        <!-- Only showing partial grid in preview -->
+                    </div>
+                    <p>Categories: Fruits, Days of the Week, Months, Types of Weather</p>
+                </div>
+                <a href="#" class="puzzle-link">Play This Puzzle</a>
+            </div>
+            
+            <div class="puzzle-card">
+                <div class="puzzle-date">November 8, 2023</div>
+                <div class="puzzle-difficulty">
+                    <span class="difficulty-label">Difficulty:</span>
+                    <div class="difficulty-meter">
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot"></div>
+                    </div>
+                </div>
+                <div class="puzzle-preview">
+                    <div class="preview-grid">
+                        <div class="preview-tile">PARIS</div>
+                        <div class="preview-tile">TOKYO</div>
+                        <div class="preview-tile">DOG</div>
+                        <div class="preview-tile">HORSE</div>
+                        <!-- Only showing partial grid in preview -->
+                    </div>
+                    <p>Categories: Capital Cities, Animals, Board Games, Musical Instruments</p>
+                </div>
+                <a href="#" class="puzzle-link">Play This Puzzle</a>
+            </div>
+            
+            <div class="puzzle-card">
+                <div class="puzzle-date">November 7, 2023</div>
+                <div class="puzzle-difficulty">
+                    <span class="difficulty-label">Difficulty:</span>
+                    <div class="difficulty-meter">
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                        <div class="difficulty-dot active"></div>
+                    </div>
+                </div>
+                <div class="puzzle-preview">
+                    <div class="preview-grid">
+                        <div class="preview-tile">FACE</div>
+                        <div class="preview-tile">ACE</div>
+                        <div class="preview-tile">MOON</div>
+                        <div class="preview-tile">MARS</div>
+                        <!-- Only showing partial grid in preview -->
+                    </div>
+                    <p>Categories: Cards, Celestial Bodies, Prefixes, Words that can follow "about"</p>
+                </div>
+                <a href="#" class="puzzle-link">Play This Puzzle</a>
+            </div>
+        </div>
+        
+        <div class="pagination">
+            <button class="pagination-button active">1</button>
+            <button class="pagination-button">2</button>
+            <button class="pagination-button">3</button>
+            <button class="pagination-button">4</button>
+            <button class="pagination-button">Next</button>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; <span id="current-year"></span> NYT Connections Helper. Not affiliated with The New York Times.</p>
+            <p>This site uses AI to help with the daily NYT Connections puzzle.</p>
+            <div class="footer-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Use</a>
+                <a href="contact.html">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Set current year in footer
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            // Add event listeners for filters
+            document.getElementById('month-filter').addEventListener('change', filterPuzzles);
+            document.getElementById('difficulty-filter').addEventListener('change', filterPuzzles);
+            document.getElementById('sort-filter').addEventListener('change', sortPuzzles);
+            
+            // Add pagination functionality
+            document.querySelectorAll('.pagination-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.pagination-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    // In production, this would load the appropriate page of puzzles
+                });
+            });
+        });
+        
+        // Filter puzzles based on selected criteria
+        function filterPuzzles() {
+            // In production, this would apply filters to the puzzle display
+            console.log('Filtering puzzles...');
+        }
+        
+        // Sort puzzles based on selected criteria
+        function sortPuzzles() {
+            // In production, this would sort the puzzles based on the selected order
+            console.log('Sorting puzzles...');
+        }
+    </script>
+</body>
+</html> 

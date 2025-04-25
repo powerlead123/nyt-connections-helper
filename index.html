@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Get AI-powered hints and assistance for the NYT Connections puzzle game. Analyze word groups, find patterns, and improve your solving skills.">
+    <meta name="keywords" content="NYT Connections, Connections game, AI hints, puzzle assistance, word patterns, NYT puzzle helper">
+    <!-- 防止浏览器缓存 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- API key can be dynamically injected by Cloudflare Workers -->
+    <meta name="ai-api-key" content="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">
+    <title>NYT Connections Helper</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Preconnect to Google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Schema.org markup for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "NYT Connections Helper",
+      "url": "https://nytconnections.com",
+      "description": "AI-powered hints and assistance for the NYT Connections puzzle game",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://nytconnections.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <!-- Tailwind CSS - For production, we should use a local file or PostCSS plugin -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Custom styles -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f9fafb;
+        }
+        
+        .connections-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+        
+        @media (max-width: 640px) {
+            .connections-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .word-tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .word-tile:hover {
+            transform: scale(1.02);
+        }
+        
+        .loading-ring {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .loading-ring:after {
+            content: " ";
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid #fff;
+            border-color: #fff transparent #fff transparent;
+            animation: loading-ring 1.2s linear infinite;
+        }
+        
+        @keyframes loading-ring {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <!-- 按正确顺序加载 JavaScript 模块 -->
+    <script type="module" src="js/config.js"></script>
+    <script type="module" src="js/ai-helper.js"></script>
+    <script type="module" src="js/app.js"></script>
+</head>
+<body class="min-h-screen">
+    <header class="bg-purple-600 text-white shadow-md">
+        <div class="container mx-auto py-4 px-4 md:px-6">
+            <div class="flex items-center gap-3">
+                <img src="assets/nyt-connections-logo.png" 
+                     alt="NYT Connections Logo"
+                     class="w-12 h-12 md:w-16 md:h-16 object-contain" />
+                <div>
+                    <h1 class="text-2xl font-bold">NYT Connections Helper</h1>
+                    <p class="text-purple-100">Daily Puzzle Analysis and Archive</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6">
+        <!-- Application content will be dynamically generated via JavaScript -->
+        <div class="text-center py-8">
+            <div class="loading-ring"></div>
+            <p class="mt-4 text-gray-600">Loading application...</p>
+        </div>
+    </main>
+
+    <footer class="mt-8 bg-gray-100 py-6 border-t">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-gray-600 text-sm">
+                        NYT Connections Helper &copy; 2023
+                    </p>
+                    <p class="text-gray-500 text-xs mt-1">
+                        This website is not affiliated with The New York Times. Connections is a trademark of The New York Times.
+                    </p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-purple-600 hover:text-purple-800 text-sm">About</a>
+                    <a href="#" class="text-purple-600 hover:text-purple-800 text-sm">Terms of Use</a>
+                    <a href="#" class="text-purple-600 hover:text-purple-800 text-sm">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 
