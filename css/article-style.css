@@ -1,0 +1,396 @@
+/* 基础样式 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.puzzle-solution {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 头部样式 */
+header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.2rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.puzzle-metadata {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+/* 快速导航 */
+.quick-nav {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.quick-nav a {
+    padding: 0.5rem 1rem;
+    background: #f0f7ff;
+    color: #0066cc;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.quick-nav a:hover {
+    background: #0066cc;
+    color: white;
+}
+
+/* 游戏介绍 */
+.game-intro {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.difficulty-explanation {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-left: 4px solid #0066cc;
+    border-radius: 4px;
+}
+
+/* 难度标签 */
+.difficulty-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.difficulty-badge.easy { 
+    background-color: #e6f4ea; 
+    color: #137333; 
+}
+
+.difficulty-badge.medium { 
+    background-color: #fef7e0; 
+    color: #b93; 
+}
+
+.difficulty-badge.hard { 
+    background-color: #fce8e6; 
+    color: #c5221f; 
+}
+
+/* 提示卡片 */
+.hints-section {
+    margin: 2rem 0;
+}
+
+.hints-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.hint-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.hint-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.initial-hint {
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+.additional-hints {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.extra-hint, .strategy-tip {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0.5rem 0;
+}
+
+/* 解答卡片 */
+.solutions-section {
+    margin: 3rem 0;
+}
+
+.solutions-container {
+    display: grid;
+    gap: 2rem;
+}
+
+.solution-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+}
+
+.solution-card:hover {
+    transform: translateY(-2px);
+}
+
+/* 类别颜色 */
+.category-yellow { 
+    background-color: #fff8e1; 
+    border-left: 4px solid #ffd54f;
+}
+
+.category-green { 
+    background-color: #e8f5e9;
+    border-left: 4px solid #66bb6a;
+}
+
+.category-blue { 
+    background-color: #e3f2fd;
+    border-left: 4px solid #42a5f5;
+}
+
+.category-purple { 
+    background-color: #f3e5f5;
+    border-left: 4px solid #ab47bc;
+}
+
+/* 单词列表 */
+.word-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+    margin: 1.5rem 0;
+}
+
+.word-list li {
+    padding: 0.8rem;
+    background: white;
+    border-radius: 4px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.word-list li:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: #f8f9fa;
+}
+
+/* 解决方案详情 */
+.solution-details {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.explanation {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.knowledge-box {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.knowledge-box h4 {
+    color: #0066cc;
+    margin-bottom: 0.5rem;
+}
+
+/* 策略和技巧 */
+.strategy-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.tips-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.general-tips, .specific-tips {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.general-tips ul, .specific-tips ul {
+    padding-left: 1.2rem;
+}
+
+.general-tips li, .specific-tips li {
+    margin: 0.8rem 0;
+    color: #333;
+}
+
+/* 相关游戏 */
+.related-section {
+    margin: 3rem 0;
+}
+
+.related-games {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.game-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.game-card h3 {
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+.game-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.8rem 1.5rem;
+    background: #0066cc;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.game-link:hover {
+    background: #0052a3;
+}
+
+/* 页脚样式 */
+footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.navigation {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    color: #0066cc;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background-color: #f0f7ff;
+}
+
+.metadata {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.disclaimer {
+    margin-top: 1rem;
+    font-style: italic;
+    color: #999;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+    
+    .puzzle-solution {
+        padding: 1.5rem;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    .word-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .hints-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .tips-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .related-games {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .puzzle-solution {
+        box-shadow: none;
+    }
+    
+    .quick-nav,
+    .game-link,
+    .nav-link {
+        display: none;
+    }
+} 

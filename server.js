@@ -9,16 +9,22 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const path = require('path');
 const fs = require('fs').promises;
+const ArticleGenerator = require('./public/js/article-generator');
 
 // Initialize app
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const BASE_URL = 'https://mashable.com';
 
 // Use middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); // Serve static files from root directory
+app.use(express.static(path.join(__dirname))); // Serve static files from root directory
+
+// 添加tips路由
+app.get('/tips', (req, res) => {
+    res.sendFile(path.join(__dirname, 'tips.html'));
+});
 
 // Data storage (in production, use a proper database)
 global.puzzleData = {
@@ -107,44 +113,26 @@ app.get('/api/today', async (req, res) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
-    try {
-        // 检查是否需要获取新数据
-        const needNewData = !global.puzzleData.latest || 
-                          !isSameDate(new Date(global.puzzleData.latest.date), new Date());
-        
-        // 如果需要新数据，尝试抓取
-        if (needNewData) {
-            console.log('需要获取新数据');
-            try {
-                const newPuzzle = await scrapeDailyPuzzle();
-                console.log('数据获取完成:', newPuzzle.isSampleData ? '返回示例数据' : '获取新数据');
-            } catch (error) {
-                console.error('获取新数据失败:', error);
-                // 如果抓取失败且没有任何数据，返回示例数据
-                if (!global.puzzleData.latest) {
-                    global.puzzleData.latest = getDefaultSampleData();
-                    console.log('返回示例数据');
-                }
-            }
+    // 只在管理员手动请求时尝试刷新数据
+    const isAdmin = req.query.admin === 'true';
+    const shouldRefresh = isAdmin && req.query.refresh === 'true';
+    
+    if (shouldRefresh) {
+        console.log('管理员请求刷新数据');
+        try {
+            const newPuzzle = await scrapeDailyPuzzle();
+            console.log('数据刷新完成:', newPuzzle.isSampleData ? '返回示例数据' : '获取新数据');
+        } catch (error) {
+            console.error('强制刷新失败:', error);
         }
-        
-        if (global.puzzleData.latest) {
-            // 返回克隆对象避免修改原始数据
-            const responseData = JSON.parse(JSON.stringify(global.puzzleData.latest));
-            res.json(responseData);
-        } else {
-            // 这种情况应该很少发生，因为我们总是会有示例数据
-            res.status(404).json({ 
-                error: 'No puzzle data available',
-                message: '无法加载谜题数据。请稍后再试。'
-            });
-        }
-    } catch (error) {
-        console.error('处理请求时发生错误:', error);
-        res.status(500).json({ 
-            error: 'Internal server error',
-            message: '服务器错误，请稍后再试。'
-        });
+    }
+    
+    if (global.puzzleData.latest) {
+        // 返回克隆对象避免修改原始数据
+        const responseData = JSON.parse(JSON.stringify(global.puzzleData.latest));
+        res.json(responseData);
+    } else {
+        res.status(404).json({ error: 'No puzzle data available yet' });
     }
 });
 
@@ -226,6 +214,13 @@ async function getArchiveList(filters = {}) {
             puzzle.difficulty === filters.difficulty
         );
     }
+    
+    // 按日期降序排序（从新到旧）
+    filteredPuzzles.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA;
+    });
     
     // 添加统计信息
     const archiveWithStats = filteredPuzzles.map(puzzle => ({
@@ -1024,6 +1019,170 @@ app.post('/api/archive/import', async (req, res) => {
     } catch (error) {
         console.error('导入存档失败:', error);
         res.status(500).json({ error: '导入存档失败: ' + error.message });
+    }
+});
+
+// 添加示例数据API端点
+app.get('/api/sample', (req, res) => {
+    const sampleData = {
+        puzzle: {
+            date: new Date().toISOString().split('T')[0],
+            difficulty: "medium",
+            categories: [
+                {
+                    name: "Gum flavors",
+                    words: ["BUBBLEGUM", "CINNAMON", "MENTHOL", "WINTERGREEN"]
+                },
+                {
+                    name: "Starting point",
+                    words: ["CATALYST", "LAUNCHPAD", "SPARK", "SPRINGBOARD"]
+                },
+                {
+                    name: "Great American songbook songs",
+                    words: ["AUTUMN LEAVES", "SUMMERTIME", "UNFORGETTABLE", "WITCHCRAFT"]
+                },
+                {
+                    name: "__ Tube",
+                    words: ["FALLOPIAN", "INNER", "TEST", "VACUUM"]
+                }
+            ]
+        },
+        archive: [
+            {
+                date: "2025-04-24",
+                difficulty: "easy",
+                title: "Yesterday's Puzzle"
+            },
+            {
+                date: "2025-04-23",
+                difficulty: "hard",
+                title: "Day Before Yesterday"
+            }
+        ]
+    };
+    
+    res.json(sampleData);
+});
+
+// 健康检查端点
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 添加今日文章路由
+app.get('/articles/today', async (req, res) => {
+    try {
+        // 获取今天的谜题数据
+        const today = new Date();
+        const todayFormatted = formatDate(today);
+        
+        if (!global.puzzleData.latest) {
+            return res.status(404).send('今日谜题尚未发布');
+        }
+        
+        // 使用ArticleGenerator生成文章内容
+        const articleGenerator = new ArticleGenerator();
+        const articleHtml = articleGenerator.generateHTML(global.puzzleData.latest);
+        
+        // 返回生成的HTML页面
+        res.send(articleHtml);
+    } catch (error) {
+        console.error('生成今日文章失败:', error);
+        res.status(500).send('生成文章时发生错误');
+    }
+});
+
+// 添加存档页面路由
+app.get('/archive', async (req, res) => {
+    try {
+        // 获取存档数据
+        const archiveData = await getArchiveList();
+        
+        // 返回HTML页面
+        res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYT Connections Puzzle Archive</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <header class="bg-purple-600 text-white shadow-md mb-8">
+        <div class="container mx-auto py-4 px-4">
+            <a href="/" class="text-white hover:text-purple-200">← Back to Home</a>
+        </div>
+    </header>
+    
+    <main class="container mx-auto px-4 max-w-4xl">
+        <h1 class="text-3xl font-bold mb-8">NYT Connections Puzzle Archive</h1>
+        
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            ${archiveData.map(puzzle => `
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-2">${puzzle.date}</h2>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-2 py-1 rounded text-sm ${
+                            puzzle.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                            puzzle.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                        }">
+                            ${puzzle.difficulty.charAt(0).toUpperCase() + puzzle.difficulty.slice(1)}
+                        </span>
+                    </div>
+                    <div class="space-y-2">
+                        ${puzzle.categories.map(cat => `
+                            <p class="text-gray-600">${cat.name}</p>
+                        `).join('')}
+                    </div>
+                    <a href="/articles/${puzzle.date}" class="mt-4 inline-block text-purple-600 hover:text-purple-800">
+                        View Details →
+                    </a>
+                </div>
+            `).join('')}
+        </div>
+    </main>
+    
+    <footer class="mt-12 text-center text-gray-500 text-sm pb-8">
+        <p>Last updated: ${new Date().toLocaleString()}</p>
+    </footer>
+</body>
+</html>
+        `);
+    } catch (error) {
+        console.error('生成存档页面失败:', error);
+        res.status(500).send('生成存档页面时发生错误');
+    }
+});
+
+// 添加特定日期文章路由
+app.get('/articles/:date', async (req, res) => {
+    try {
+        const requestedDate = req.params.date;
+        let puzzleData;
+        
+        // 检查是否是今天的谜题
+        if (global.puzzleData.latest && global.puzzleData.latest.date === requestedDate) {
+            puzzleData = global.puzzleData.latest;
+        } else {
+            // 从存档中查找
+            puzzleData = global.puzzleData.archive.find(p => p.date === requestedDate);
+        }
+        
+        if (!puzzleData) {
+            return res.status(404).send('找不到该日期的谜题');
+        }
+        
+        // 使用ArticleGenerator生成文章内容
+        const articleGenerator = new ArticleGenerator();
+        const articleHtml = articleGenerator.generateHTML(puzzleData);
+        
+        // 返回生成的HTML页面
+        res.send(articleHtml);
+    } catch (error) {
+        console.error('生成文章失败:', error);
+        res.status(500).send('生成文章时发生错误');
     }
 });
 

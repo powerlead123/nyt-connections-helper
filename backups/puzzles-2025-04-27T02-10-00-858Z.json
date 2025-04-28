@@ -1,0 +1,301 @@
+{
+  "latest": {
+    "date": "2025-04-26",
+    "categories": [
+      {
+        "name": "Tint",
+        "words": [
+          "COLOR",
+          "HUE",
+          "SHADE",
+          "TONE"
+        ]
+      },
+      {
+        "name": "Valley",
+        "words": [
+          "DALE",
+          "DELL",
+          "GLEN",
+          "HOLLOW"
+        ]
+      },
+      {
+        "name": "Bobs",
+        "words": [
+          "DOLE",
+          "HOPE",
+          "MARLEY",
+          "ROSS"
+        ]
+      },
+      {
+        "name": "Color anagrams",
+        "words": [
+          "DRE",
+          "GARY",
+          "GENRE",
+          "LUBE"
+        ]
+      }
+    ],
+    "difficulty": "medium",
+    "lastUpdated": "2025-04-26T02:09:58.293Z",
+    "isSampleData": false,
+    "metadata": {
+      "createdAt": "2025-04-26T02:09:58.293Z",
+      "lastAccessed": "2025-04-26T02:09:58.293Z",
+      "accessCount": 0,
+      "completionStats": {
+        "totalAttempts": 0,
+        "successfulAttempts": 0,
+        "averageTime": 0,
+        "totalTime": 0
+      }
+    }
+  },
+  "archive": [
+    {
+      "date": "2025-04-18",
+      "categories": [
+        {
+          "name": "Interjections",
+          "words": [
+            "BOY",
+            "GOODNESS",
+            "MAN",
+            "WOW"
+          ]
+        },
+        {
+          "name": "Horror movies, with \"The\"",
+          "words": [
+            "BIRDS",
+            "EXORCIST",
+            "HAUNTING",
+            "SHINING"
+          ]
+        },
+        {
+          "name": "Things you can pick",
+          "words": [
+            "APPLE",
+            "BANJO",
+            "CARD",
+            "NOSE"
+          ]
+        },
+        {
+          "name": "Personal property minus \"S\"",
+          "words": [
+            "BELONGING",
+            "EFFECT",
+            "GOOD",
+            "POSSESSION"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-18T06:58:38.393Z",
+      "isSampleData": false
+    },
+    {
+      "date": "2025-04-23",
+      "categories": [
+        {
+          "name": "Parts of a tree",
+          "words": [
+            "BRANCH",
+            "LEAF",
+            "ROOT",
+            "TRUNK"
+          ]
+        },
+        {
+          "name": "Canine/feline features",
+          "words": [
+            "FUR",
+            "MUZZLE",
+            "PAW",
+            "TAIL"
+          ]
+        },
+        {
+          "name": "Comedic routine",
+          "words": [
+            "ACT",
+            "BIT",
+            "GAG",
+            "SKETCH"
+          ]
+        },
+        {
+          "name": "__Pole",
+          "words": [
+            "BEAN",
+            "FLAG",
+            "MAY",
+            "TAD"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-23T07:55:41.169Z",
+      "isSampleData": false
+    },
+    {
+      "date": "2025-04-24",
+      "categories": [
+        {
+          "name": "Things that are white",
+          "words": [
+            "BABY POWDER",
+            "MILK",
+            "POLAR BEAR",
+            "SNOW"
+          ]
+        },
+        {
+          "name": "Kinds of lettuce",
+          "words": [
+            "BUTTER",
+            "ICEBERG",
+            "LEAF",
+            "ROMAINE"
+          ]
+        },
+        {
+          "name": "\"Batman\" villains",
+          "words": [
+            "BANE",
+            "JOKER",
+            "PENGUIN",
+            "SCARECROW"
+          ]
+        },
+        {
+          "name": "They have literal/idiomatic ears",
+          "words": [
+            "CORNFIELD",
+            "MUSICIANS",
+            "PITCHERS",
+            "WALLS"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-24T02:59:57.509Z",
+      "isSampleData": false
+    },
+    {
+      "date": "2025-04-25",
+      "categories": [
+        {
+          "name": "Gum flavors",
+          "words": [
+            "BUBBLEGUM",
+            "CINNAMON",
+            "MENTHOL",
+            "WINTERGREEN"
+          ]
+        },
+        {
+          "name": "Starting point",
+          "words": [
+            "CATALYST",
+            "LAUNCHPAD",
+            "SPARK",
+            "SPRINGBOARD"
+          ]
+        },
+        {
+          "name": "Great American songbook songs",
+          "words": [
+            "AUTUMN LEAVES",
+            "SUMMERTIME",
+            "UNFORGETTABLE",
+            "WITCHCRAFT"
+          ]
+        },
+        {
+          "name": "__ Tube",
+          "words": [
+            "FALLOPIAN",
+            "INNER",
+            "TEST",
+            "VACUUM"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-25T05:08:24.175Z",
+      "isSampleData": false,
+      "metadata": {
+        "createdAt": "2025-04-25T05:08:24.175Z",
+        "lastAccessed": "2025-04-25T05:08:24.175Z",
+        "accessCount": 0,
+        "completionStats": {
+          "totalAttempts": 0,
+          "successfulAttempts": 0,
+          "averageTime": 0,
+          "totalTime": 0
+        }
+      }
+    },
+    {
+      "date": "2025-04-26",
+      "categories": [
+        {
+          "name": "Tint",
+          "words": [
+            "COLOR",
+            "HUE",
+            "SHADE",
+            "TONE"
+          ]
+        },
+        {
+          "name": "Valley",
+          "words": [
+            "DALE",
+            "DELL",
+            "GLEN",
+            "HOLLOW"
+          ]
+        },
+        {
+          "name": "Bobs",
+          "words": [
+            "DOLE",
+            "HOPE",
+            "MARLEY",
+            "ROSS"
+          ]
+        },
+        {
+          "name": "Color anagrams",
+          "words": [
+            "DRE",
+            "GARY",
+            "GENRE",
+            "LUBE"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-26T02:09:58.293Z",
+      "isSampleData": false,
+      "metadata": {
+        "createdAt": "2025-04-26T02:09:58.293Z",
+        "lastAccessed": "2025-04-26T02:09:58.293Z",
+        "accessCount": 0,
+        "completionStats": {
+          "totalAttempts": 0,
+          "successfulAttempts": 0,
+          "averageTime": 0,
+          "totalTime": 0
+        }
+      }
+    }
+  ]
+}

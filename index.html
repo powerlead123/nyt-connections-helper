@@ -102,14 +102,52 @@
 <body class="min-h-screen">
     <header class="bg-purple-600 text-white shadow-md">
         <div class="container mx-auto py-4 px-4 md:px-6">
-            <div class="flex items-center gap-3">
-                <img src="assets/nyt-connections-logo.png" 
-                     alt="NYT Connections Logo"
-                     class="w-12 h-12 md:w-16 md:h-16 object-contain" />
-                <div>
-                    <h1 class="text-2xl font-bold">NYT Connections Helper</h1>
-                    <p class="text-purple-100">Daily Puzzle Analysis and Archive</p>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="assets/nyt-connections-logo.png" 
+                         alt="NYT Connections Logo"
+                         class="w-12 h-12 md:w-16 md:h-16 object-contain" />
+                    <div>
+                        <h1 class="text-2xl font-bold">NYT Connections Helper</h1>
+                        <p class="text-purple-100">Daily Puzzle Analysis and Archive</p>
+                    </div>
                 </div>
+                
+                <!-- 主导航栏 -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="/articles/today" class="text-white hover:text-purple-200 font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        Today's Puzzle
+                    </a>
+                    <a href="/archive" class="text-white hover:text-purple-200 font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                        </svg>
+                        Archive
+                    </a>
+                    <a href="/tips" class="text-white hover:text-purple-200 font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        Tips & Strategies
+                    </a>
+                </nav>
+
+                <!-- 移动端菜单按钮 -->
+                <button class="md:hidden text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 移动端导航菜单 -->
+            <div class="md:hidden mt-4 hidden">
+                <a href="/articles/today" class="block py-2 text-white hover:text-purple-200">Today's Puzzle</a>
+                <a href="/archive" class="block py-2 text-white hover:text-purple-200">Archive</a>
+                <a href="/tips" class="block py-2 text-white hover:text-purple-200">Tips & Strategies</a>
             </div>
         </div>
     </header>

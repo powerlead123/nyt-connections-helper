@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn expert tips and strategies for solving NYT Connections puzzles. Improve your solving skills with our comprehensive guide.">
+    <meta name="keywords" content="NYT Connections tips, Connections game strategy, puzzle solving tips, NYT puzzle guide">
+    <!-- 防止浏览器缓存 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Tips & Strategies - NYT Connections Helper</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Preconnect to Google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Custom styles -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f9fafb;
+        }
+        
+        .tip-card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .tip-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="bg-purple-600 text-white shadow-md">
+        <div class="container mx-auto py-4 px-4 md:px-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="assets/nyt-connections-logo.png" 
+                         alt="NYT Connections Logo"
+                         class="w-12 h-12 md:w-16 md:h-16 object-contain" />
+                    <div>
+                        <h1 class="text-2xl font-bold">NYT Connections Helper</h1>
+                        <p class="text-purple-100">Tips & Strategies</p>
+                    </div>
+                </div>
+                
+                <!-- 主导航栏 -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="/articles/today" class="text-white hover:text-purple-200 font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        Today's Puzzle
+                    </a>
+                    <a href="/archive" class="text-white hover:text-purple-200 font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                        </svg>
+                        Archive
+                    </a>
+                    <a href="/tips" class="text-white hover:text-purple-200 font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        Tips & Strategies
+                    </a>
+                </nav>
+
+                <!-- 移动端菜单按钮 -->
+                <button class="md:hidden text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 移动端导航菜单 -->
+            <div class="md:hidden mt-4 hidden">
+                <a href="/articles/today" class="block py-2 text-white hover:text-purple-200">Today's Puzzle</a>
+                <a href="/archive" class="block py-2 text-white hover:text-purple-200">Archive</a>
+                <a href="/tips" class="block py-2 text-white hover:text-purple-200">Tips & Strategies</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Connections Solving Tips & Strategies</h2>
+            
+            <div class="tip-card">
+                <h3 class="text-xl font-semibold text-purple-600 mb-3">1. Start with the Most Obvious Groups</h3>
+                <p class="text-gray-700 mb-4">
+                    Always look for the easiest combinations first. These are usually words that share clear common characteristics, such as:
+                </p>
+                <ul class="list-disc list-inside text-gray-600 space-y-2">
+                    <li>Color-related words</li>
+                    <li>Numbers or units of measurement</li>
+                    <li>Items from the same category (like food, animals, etc.)</li>
+                    <li>Parts of common phrases</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <h3 class="text-xl font-semibold text-purple-600 mb-3">2. Pay Attention to Multiple Meanings</h3>
+                <p class="text-gray-700 mb-4">
+                    A word can have multiple meanings, which may affect which group it belongs to. For example:
+                </p>
+                <ul class="list-disc list-inside text-gray-600 space-y-2">
+                    <li>Consider different word functions (noun, verb, etc.)</li>
+                    <li>Think about literal and metaphorical meanings</li>
+                    <li>Look for special usage or slang meanings</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <h3 class="text-xl font-semibold text-purple-600 mb-3">3. Use Process of Elimination</h3>
+                <p class="text-gray-700 mb-4">
+                    Once you've identified some groups, the remaining words become easier to categorize:
+                </p>
+                <ul class="list-disc list-inside text-gray-600 space-y-2">
+                    <li>Keep track of words you've ruled out for certain groups</li>
+                    <li>Look for commonalities among remaining words</li>
+                    <li>Remember word distribution (each group must have 4 words)</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <h3 class="text-xl font-semibold text-purple-600 mb-3">4. Observe Word Patterns</h3>
+                <p class="text-gray-700 mb-4">
+                    Sometimes connections between words aren't obvious and require careful observation:
+                </p>
+                <ul class="list-disc list-inside text-gray-600 space-y-2">
+                    <li>Check if words are similar in length</li>
+                    <li>Notice word beginnings or endings</li>
+                    <li>Look for hidden themes or categories</li>
+                    <li>Consider cultural or historical context</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <h3 class="text-xl font-semibold text-purple-600 mb-3">5. Use Color Difficulty Hints</h3>
+                <p class="text-gray-700 mb-4">
+                    Colors in the Connections game represent different difficulty levels:
+                </p>
+                <ul class="list-disc list-inside text-gray-600 space-y-2">
+                    <li>Yellow - Easiest</li>
+                    <li>Green - Easy</li>
+                    <li>Blue - Medium</li>
+                    <li>Purple - Hardest</li>
+                </ul>
+                <p class="text-gray-700 mt-4">
+                    If you're stuck, try starting with the yellow category, which is typically the easiest to identify.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-8 bg-gray-100 py-6 border-t">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-gray-600 text-sm">
+                        NYT Connections Helper &copy; 2023
+                    </p>
+                    <p class="text-gray-500 text-xs mt-1">
+                        This website is not affiliated with The New York Times. Connections is a trademark of The New York Times.
+                    </p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-purple-600 hover:text-purple-800 text-sm">About</a>
+                    <a href="#" class="text-purple-600 hover:text-purple-800 text-sm">Terms of Use</a>
+                    <a href="#" class="text-purple-600 hover:text-purple-800 text-sm">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

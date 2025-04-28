@@ -34,7 +34,7 @@ async function init() {
   await setupExternalAI();
 
   // Set API base URL for local development
-  apiBaseUrl = 'http://localhost:3000'; // 使用本地服务器
+  apiBaseUrl = 'http://localhost:8080'; // 使用正确的本地服务器端口
   
   // Get and set API key
   const apiKeyMeta = document.querySelector('meta[name="ai-api-key"]');
@@ -74,29 +74,18 @@ async function init() {
  */
 async function displaySampleData() {
   try {
-    console.log('尝试加载示例数据...');
-    
-    // 从服务器获取示例数据
+    // 从服务器获取最新的示例数据
     const response = await fetch(`${apiBaseUrl}/api/sample`);
-    const data = await response.json();
-    
     if (!response.ok) {
-      throw new Error(data.message || '无法加载示例数据');
+      throw new Error(`获取示例数据失败: ${response.status}`);
     }
     
-    if (data.puzzle) {
-      console.log('成功加载示例数据');
-      displayPuzzle(data.puzzle);
-      if (data.archive) {
-        displayArchiveList(data.archive);
-      }
-    } else {
-      throw new Error('示例数据格式无效');
-    }
-    
+    const data = await response.json();
+    displayPuzzle(data.puzzle);
+    displayArchiveList(data.archive || []);
   } catch (error) {
-    console.error('加载示例数据失败:', error);
-    showErrorMessage('无法加载任何数据。请检查网络连接后重试。');
+    console.error('获取示例数据失败:', error);
+    showErrorMessage('无法加载谜题数据。请稍后再试。');
   }
 }
 
@@ -209,36 +198,32 @@ async function loadTodaysPuzzle() {
   console.log('正在加载今日谜题数据...');
   
   try {
-    // 显示加载状态
-    showLoading();
-    
-    // 尝试从API获取数据
-    const response = await fetch(`${apiBaseUrl}/api/today`);
-    const data = await response.json();
-    
+    // 添加时间戳防止缓存
+    const timestamp = new Date().getTime();
+    const response = await fetch(`${apiBaseUrl}/api/today?t=${timestamp}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+
     if (!response.ok) {
-      throw new Error(data.message || '无法加载谜题数据');
+      throw new Error(`API响应错误: ${response.status} - ${await response.text()}`);
     }
+
+    const puzzleData = await response.json();
+    console.log('初次获取谜题数据:', puzzleData);
     
     // 显示谜题数据
-    displayPuzzle(data);
+    displayPuzzle(puzzleData);
+    console.log('今日谜题加载完成');
     
-    // 隐藏加载状态
-    hideLoading();
-    
+    return puzzleData;
   } catch (error) {
-    console.error('加载谜题数据失败:', error);
-    hideLoading();
-    
-    // 显示错误信息
-    showErrorMessage(error.message || '无法加载谜题数据。请稍后再试。');
-    
-    // 尝试显示示例数据
-    try {
-      await displaySampleData();
-    } catch (sampleError) {
-      console.error('加载示例数据也失败了:', sampleError);
-    }
+    console.error(' 加载今日谜题失败:', error);
+    throw error;
   }
 }
 
@@ -1293,34 +1278,42 @@ function displayArchiveList(archiveList) {
 }
 
 /**
- * Show error message to user
+ * Show error message
  */
 function showErrorMessage(message) {
   const container = document.getElementById('puzzle-container');
-  if (container) {
-    // 创建错误消息元素
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4';
-    errorDiv.role = 'alert';
-    
-    // 添加错误消息
-    const messageP = document.createElement('p');
-    messageP.textContent = message;
-    errorDiv.appendChild(messageP);
-    
-    // 添加重试按钮
-    const retryButton = document.createElement('button');
-    retryButton.className = 'mt-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded';
-    retryButton.textContent = '重试';
-    retryButton.onclick = async () => {
-      errorDiv.remove();
-      await loadTodaysPuzzle();
-    };
-    errorDiv.appendChild(retryButton);
-    
-    // 插入到容器开头
-    container.insertBefore(errorDiv, container.firstChild);
-  }
+  if (!container) return;
+  
+  const errorEl = document.createElement('div');
+  errorEl.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4';
+  errorEl.role = 'alert';
+  errorEl.innerHTML = `
+    <span class="block sm:inline">${message}</span>
+    <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+      <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <title>Close</title>
+        <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651
+        3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0
+        1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758
+        3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+      </svg>
+    </span>
+  `;
+  
+  // Add close button event
+  errorEl.querySelector('svg').addEventListener('click', function() {
+    errorEl.remove();
+  });
+  
+  // Add to beginning of container
+  container.insertBefore(errorEl, container.firstChild);
+  
+  // Auto-dismiss after 5 seconds
+  setTimeout(() => {
+    if (errorEl.parentNode) {
+      errorEl.remove();
+    }
+  }, 5000);
 }
 
 /**
