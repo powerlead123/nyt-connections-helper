@@ -48,9 +48,161 @@
     <link rel="stylesheet" href="/css/article-style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Game Feature Section Styles */
+        .game-feature {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 1rem;
+            color: white;
+            text-align: center;
+        }
+        
+        .game-feature h2 {
+            font-size: 1.75rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            text-align: left;
+        }
+        
+        .feature-card h3 {
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-card p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #4f46e5;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Enhanced Navigation Styles */
+        .main-nav {
+            background: #4f46e5;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .nav-logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-link:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+    </style>
 </head>
 <body>
+    <!-- Enhanced Main Navigation -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="/assets/nyt-connections-logo.png" alt="NYT Connections Logo">
+                <span>NYT Connections Helper</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-gamepad"></i>
+                    Play Game
+                </a>
+                <a href="/archive" class="nav-link">
+                    <i class="fas fa-archive"></i>
+                    Archive
+                </a>
+                <a href="/tips" class="nav-link">
+                    <i class="fas fa-lightbulb"></i>
+                    Tips
+                </a>
+            </div>
+        </div>
+    </nav>
+
     <article class="puzzle-solution" itemscope itemtype="https://schema.org/Article">
+        <!-- Game Feature Section -->
+        <section class="game-feature">
+            <h2>Try NYT Connections With AI Assistant!</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>AI-Powered Hints</h3>
+                    <p>Get smart, contextual hints that help you learn without spoiling the fun.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Real-Time Practice</h3>
+                    <p>Play today's puzzle right in your browser with our accurate game simulation.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Daily Updates</h3>
+                    <p>New puzzles every day at midnight ET, synchronized with NYT release.</p>
+                </div>
+            </div>
+            <a href="/" class="cta-button">Play Today's Puzzle</a>
+            <a href="/archive" class="cta-button">Browse Archive</a>
+        </section>
+
         <!-- 面包屑导航 -->
         <nav class="breadcrumb" aria-label="Breadcrumb">
             <ol itemscope itemtype="https://schema.org/BreadcrumbList">
@@ -70,12 +222,6 @@
         </nav>
 
         <header>
-            <nav class="top-nav" aria-label="Main navigation">
-                <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
-                <a href="/archive" class="nav-link"><i class="fas fa-archive"></i> Archive</a>
-                <a href="/tips" class="nav-link"><i class="fas fa-lightbulb"></i> Strategy Guide</a>
-                <a href="/faq" class="nav-link"><i class="fas fa-question-circle"></i> FAQ</a>
-            </nav>
             <h1 itemprop="headline">NYT Connections Solutions - April 25, 2025</h1>
             <div class="puzzle-metadata">
                 <span class="difficulty-badge medium">

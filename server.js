@@ -9,7 +9,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const path = require('path');
 const fs = require('fs').promises;
-const ArticleGenerator = require('./public/js/article-generator');
+const { ArticleGenerator } = require('./public/js/article-generator.js');
 
 // Initialize app
 const app = express();
@@ -1081,8 +1081,15 @@ app.get('/articles/today', async (req, res) => {
         }
         
         // 使用ArticleGenerator生成文章内容
-        const articleGenerator = new ArticleGenerator();
-        const articleHtml = articleGenerator.generateHTML(global.puzzleData.latest);
+        const generator = new ArticleGenerator();
+        const articleHtml = generator.generateHTML({
+            ...global.puzzleData.latest,
+            isToday: true,
+            baseUrl: 'https://nyctconnections.com'
+        });
+        
+        // 更新访问统计
+        await updateAccessStats(todayFormatted);
         
         // 返回生成的HTML页面
         res.send(articleHtml);
@@ -1176,13 +1183,71 @@ app.get('/articles/:date', async (req, res) => {
         
         // 使用ArticleGenerator生成文章内容
         const articleGenerator = new ArticleGenerator();
-        const articleHtml = articleGenerator.generateHTML(puzzleData);
+        const articleHtml = articleGenerator.generateHTML({
+            ...puzzleData,
+            baseUrl: 'https://nyctconnections.com'
+        });
+        
+        // 更新访问统计
+        await updateAccessStats(requestedDate);
         
         // 返回生成的HTML页面
         res.send(articleHtml);
     } catch (error) {
         console.error('生成文章失败:', error);
         res.status(500).send('生成文章时发生错误');
+    }
+});
+
+// 添加robots.txt路由
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send(`User-agent: *
+Allow: /
+Allow: /articles/
+Allow: /archive/
+Allow: /tips/
+Allow: /about/
+
+Sitemap: https://nyctconnections.com/sitemap.xml`);
+});
+
+// 添加sitemap路由
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        const baseUrl = 'https://nyctconnections.com';
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        
+        // 添加主要页面
+        const mainPages = ['', 'archive', 'tips', 'about'];
+        mainPages.forEach(page => {
+            xml += `  <url>
+    <loc>${baseUrl}/${page}</loc>
+    <changefreq>daily</changefreq>
+    <priority>${page === '' ? '1.0' : '0.8'}</priority>
+  </url>\n`;
+        });
+        
+        // 添加文章页面
+        if (global.puzzleData && global.puzzleData.archive) {
+            global.puzzleData.archive.forEach(puzzle => {
+                xml += `  <url>
+    <loc>${baseUrl}/articles/${puzzle.date}</loc>
+    <lastmod>${new Date(puzzle.metadata.lastModified).toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>\n`;
+            });
+        }
+        
+        xml += '</urlset>';
+        
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (error) {
+        console.error('生成sitemap失败:', error);
+        res.status(500).send('生成sitemap时发生错误');
     }
 });
 

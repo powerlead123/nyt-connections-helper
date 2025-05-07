@@ -1,0 +1,411 @@
+{
+  "latest": {
+    "date": "2025-04-29",
+    "categories": [
+      {
+        "name": "Cooking concoctions",
+        "words": [
+          "BATTER",
+          "DOUGH",
+          "MIXTURE",
+          "PASTE"
+        ]
+      },
+      {
+        "name": "Seen on a table at a dinner party",
+        "words": [
+          "CANDLESTICK",
+          "PITCHER",
+          "PLACEMAT",
+          "PLATE"
+        ]
+      },
+      {
+        "name": "Things to climb",
+        "words": [
+          "LADDER",
+          "MOUNTAIN",
+          "ROPE",
+          "TREE"
+        ]
+      },
+      {
+        "name": "What \"Diamond\" can refer to",
+        "words": [
+          "GEMSTONE",
+          "INFIELD",
+          "RHOMBUS",
+          "SUIT"
+        ]
+      }
+    ],
+    "difficulty": "medium",
+    "lastUpdated": "2025-04-29T02:10:01.465Z",
+    "isSampleData": false,
+    "metadata": {
+      "createdAt": "2025-04-29T02:10:01.465Z",
+      "lastAccessed": "2025-04-29T06:25:58.214Z",
+      "accessCount": 8,
+      "completionStats": {
+        "totalAttempts": 0,
+        "successfulAttempts": 0,
+        "averageTime": 0,
+        "totalTime": 0
+      }
+    }
+  },
+  "archive": [
+    {
+      "date": "2025-04-18",
+      "categories": [
+        {
+          "name": "Interjections",
+          "words": [
+            "BOY",
+            "GOODNESS",
+            "MAN",
+            "WOW"
+          ]
+        },
+        {
+          "name": "Horror movies, with \"The\"",
+          "words": [
+            "BIRDS",
+            "EXORCIST",
+            "HAUNTING",
+            "SHINING"
+          ]
+        },
+        {
+          "name": "Things you can pick",
+          "words": [
+            "APPLE",
+            "BANJO",
+            "CARD",
+            "NOSE"
+          ]
+        },
+        {
+          "name": "Personal property minus \"S\"",
+          "words": [
+            "BELONGING",
+            "EFFECT",
+            "GOOD",
+            "POSSESSION"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-18T06:58:38.393Z",
+      "isSampleData": false
+    },
+    {
+      "date": "2025-04-23",
+      "categories": [
+        {
+          "name": "Parts of a tree",
+          "words": [
+            "BRANCH",
+            "LEAF",
+            "ROOT",
+            "TRUNK"
+          ]
+        },
+        {
+          "name": "Canine/feline features",
+          "words": [
+            "FUR",
+            "MUZZLE",
+            "PAW",
+            "TAIL"
+          ]
+        },
+        {
+          "name": "Comedic routine",
+          "words": [
+            "ACT",
+            "BIT",
+            "GAG",
+            "SKETCH"
+          ]
+        },
+        {
+          "name": "__Pole",
+          "words": [
+            "BEAN",
+            "FLAG",
+            "MAY",
+            "TAD"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-23T07:55:41.169Z",
+      "isSampleData": false
+    },
+    {
+      "date": "2025-04-24",
+      "categories": [
+        {
+          "name": "Things that are white",
+          "words": [
+            "BABY POWDER",
+            "MILK",
+            "POLAR BEAR",
+            "SNOW"
+          ]
+        },
+        {
+          "name": "Kinds of lettuce",
+          "words": [
+            "BUTTER",
+            "ICEBERG",
+            "LEAF",
+            "ROMAINE"
+          ]
+        },
+        {
+          "name": "\"Batman\" villains",
+          "words": [
+            "BANE",
+            "JOKER",
+            "PENGUIN",
+            "SCARECROW"
+          ]
+        },
+        {
+          "name": "They have literal/idiomatic ears",
+          "words": [
+            "CORNFIELD",
+            "MUSICIANS",
+            "PITCHERS",
+            "WALLS"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-24T02:59:57.509Z",
+      "isSampleData": false
+    },
+    {
+      "date": "2025-04-25",
+      "categories": [
+        {
+          "name": "Gum flavors",
+          "words": [
+            "BUBBLEGUM",
+            "CINNAMON",
+            "MENTHOL",
+            "WINTERGREEN"
+          ]
+        },
+        {
+          "name": "Starting point",
+          "words": [
+            "CATALYST",
+            "LAUNCHPAD",
+            "SPARK",
+            "SPRINGBOARD"
+          ]
+        },
+        {
+          "name": "Great American songbook songs",
+          "words": [
+            "AUTUMN LEAVES",
+            "SUMMERTIME",
+            "UNFORGETTABLE",
+            "WITCHCRAFT"
+          ]
+        },
+        {
+          "name": "__ Tube",
+          "words": [
+            "FALLOPIAN",
+            "INNER",
+            "TEST",
+            "VACUUM"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-25T05:08:24.175Z",
+      "isSampleData": false,
+      "metadata": {
+        "createdAt": "2025-04-25T05:08:24.175Z",
+        "lastAccessed": "2025-04-25T05:08:24.175Z",
+        "accessCount": 0,
+        "completionStats": {
+          "totalAttempts": 0,
+          "successfulAttempts": 0,
+          "averageTime": 0,
+          "totalTime": 0
+        }
+      }
+    },
+    {
+      "date": "2025-04-27",
+      "categories": [
+        {
+          "name": "Calculator buttons",
+          "words": [
+            "EQUALS",
+            "MINUS",
+            "PERCENT",
+            "TIMES"
+          ]
+        },
+        {
+          "name": "Amounts of hair",
+          "words": [
+            "LOCK",
+            "SHOCK",
+            "THATCH",
+            "TUFT"
+          ]
+        },
+        {
+          "name": "Salty snack unit",
+          "words": [
+            "COMBO",
+            "GOLDFISH",
+            "RUFFLE",
+            "TAKI"
+          ]
+        },
+        {
+          "name": "Swedish ___",
+          "words": [
+            "CHEF",
+            "FISH",
+            "MASSAGE",
+            "MEATBALL"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-27T07:41:09.089Z",
+      "isSampleData": false,
+      "metadata": {
+        "createdAt": "2025-04-27T07:41:09.089Z",
+        "lastAccessed": "2025-04-28T08:52:16.837Z",
+        "accessCount": 1,
+        "completionStats": {
+          "totalAttempts": 0,
+          "successfulAttempts": 0,
+          "averageTime": 0,
+          "totalTime": 0
+        }
+      }
+    },
+    {
+      "date": "2025-04-28",
+      "categories": [
+        {
+          "name": "Hair products",
+          "words": [
+            "GEL",
+            "MOUSSE",
+            "SPRAY",
+            "WAX"
+          ]
+        },
+        {
+          "name": "Austere",
+          "words": [
+            "BARE",
+            "PLAIN",
+            "SIMPLE",
+            "SPARE"
+          ]
+        },
+        {
+          "name": "Clues at a crime scene",
+          "words": [
+            "FIBER",
+            "FINGERPRINT",
+            "HAIR",
+            "TIRE MARK"
+          ]
+        },
+        {
+          "name": "Weary",
+          "words": [
+            "BORE",
+            "DRAIN",
+            "EXHAUST",
+            "TIRE"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-28T06:26:46.740Z",
+      "isSampleData": false,
+      "metadata": {
+        "createdAt": "2025-04-28T06:26:46.740Z",
+        "lastAccessed": "2025-04-28T08:51:43.300Z",
+        "accessCount": 2,
+        "completionStats": {
+          "totalAttempts": 0,
+          "successfulAttempts": 0,
+          "averageTime": 0,
+          "totalTime": 0
+        }
+      }
+    },
+    {
+      "date": "2025-04-29",
+      "categories": [
+        {
+          "name": "Cooking concoctions",
+          "words": [
+            "BATTER",
+            "DOUGH",
+            "MIXTURE",
+            "PASTE"
+          ]
+        },
+        {
+          "name": "Seen on a table at a dinner party",
+          "words": [
+            "CANDLESTICK",
+            "PITCHER",
+            "PLACEMAT",
+            "PLATE"
+          ]
+        },
+        {
+          "name": "Things to climb",
+          "words": [
+            "LADDER",
+            "MOUNTAIN",
+            "ROPE",
+            "TREE"
+          ]
+        },
+        {
+          "name": "What \"Diamond\" can refer to",
+          "words": [
+            "GEMSTONE",
+            "INFIELD",
+            "RHOMBUS",
+            "SUIT"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-29T02:10:01.465Z",
+      "isSampleData": false,
+      "metadata": {
+        "createdAt": "2025-04-29T02:10:01.465Z",
+        "lastAccessed": "2025-04-29T06:25:58.214Z",
+        "accessCount": 8,
+        "completionStats": {
+          "totalAttempts": 0,
+          "successfulAttempts": 0,
+          "averageTime": 0,
+          "totalTime": 0
+        }
+      }
+    }
+  ]
+}

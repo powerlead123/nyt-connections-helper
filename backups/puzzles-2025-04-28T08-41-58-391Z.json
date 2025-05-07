@@ -1,50 +1,50 @@
 {
   "latest": {
-    "date": "2025-04-26",
+    "date": "2025-04-28",
     "categories": [
       {
-        "name": "Tint",
+        "name": "Hair products",
         "words": [
-          "COLOR",
-          "HUE",
-          "SHADE",
-          "TONE"
+          "GEL",
+          "MOUSSE",
+          "SPRAY",
+          "WAX"
         ]
       },
       {
-        "name": "Valley",
+        "name": "Austere",
         "words": [
-          "DALE",
-          "DELL",
-          "GLEN",
-          "HOLLOW"
+          "BARE",
+          "PLAIN",
+          "SIMPLE",
+          "SPARE"
         ]
       },
       {
-        "name": "Bobs",
+        "name": "Clues at a crime scene",
         "words": [
-          "DOLE",
-          "HOPE",
-          "MARLEY",
-          "ROSS"
+          "FIBER",
+          "FINGERPRINT",
+          "HAIR",
+          "TIRE MARK"
         ]
       },
       {
-        "name": "Color anagrams",
+        "name": "Weary",
         "words": [
-          "DRE",
-          "GARY",
-          "GENRE",
-          "LUBE"
+          "BORE",
+          "DRAIN",
+          "EXHAUST",
+          "TIRE"
         ]
       }
     ],
     "difficulty": "medium",
-    "lastUpdated": "2025-04-26T02:09:58.293Z",
+    "lastUpdated": "2025-04-28T06:26:46.740Z",
     "isSampleData": false,
     "metadata": {
-      "createdAt": "2025-04-26T02:09:58.293Z",
-      "lastAccessed": "2025-04-26T02:09:58.293Z",
+      "createdAt": "2025-04-28T06:26:46.740Z",
+      "lastAccessed": "2025-04-28T06:26:46.740Z",
       "accessCount": 0,
       "completionStats": {
         "totalAttempts": 0,
@@ -243,51 +243,106 @@
       }
     },
     {
-      "date": "2025-04-26",
+      "date": "2025-04-27",
       "categories": [
         {
-          "name": "Tint",
+          "name": "Calculator buttons",
           "words": [
-            "COLOR",
-            "HUE",
-            "SHADE",
-            "TONE"
+            "EQUALS",
+            "MINUS",
+            "PERCENT",
+            "TIMES"
           ]
         },
         {
-          "name": "Valley",
+          "name": "Amounts of hair",
           "words": [
-            "DALE",
-            "DELL",
-            "GLEN",
-            "HOLLOW"
+            "LOCK",
+            "SHOCK",
+            "THATCH",
+            "TUFT"
           ]
         },
         {
-          "name": "Bobs",
+          "name": "Salty snack unit",
           "words": [
-            "DOLE",
-            "HOPE",
-            "MARLEY",
-            "ROSS"
+            "COMBO",
+            "GOLDFISH",
+            "RUFFLE",
+            "TAKI"
           ]
         },
         {
-          "name": "Color anagrams",
+          "name": "Swedish ___",
           "words": [
-            "DRE",
-            "GARY",
-            "GENRE",
-            "LUBE"
+            "CHEF",
+            "FISH",
+            "MASSAGE",
+            "MEATBALL"
           ]
         }
       ],
       "difficulty": "medium",
-      "lastUpdated": "2025-04-26T02:09:58.293Z",
+      "lastUpdated": "2025-04-27T07:41:09.089Z",
       "isSampleData": false,
       "metadata": {
-        "createdAt": "2025-04-26T02:09:58.293Z",
-        "lastAccessed": "2025-04-26T02:09:58.293Z",
+        "createdAt": "2025-04-27T07:41:09.089Z",
+        "lastAccessed": "2025-04-27T07:41:09.089Z",
+        "accessCount": 0,
+        "completionStats": {
+          "totalAttempts": 0,
+          "successfulAttempts": 0,
+          "averageTime": 0,
+          "totalTime": 0
+        }
+      }
+    },
+    {
+      "date": "2025-04-28",
+      "categories": [
+        {
+          "name": "Hair products",
+          "words": [
+            "GEL",
+            "MOUSSE",
+            "SPRAY",
+            "WAX"
+          ]
+        },
+        {
+          "name": "Austere",
+          "words": [
+            "BARE",
+            "PLAIN",
+            "SIMPLE",
+            "SPARE"
+          ]
+        },
+        {
+          "name": "Clues at a crime scene",
+          "words": [
+            "FIBER",
+            "FINGERPRINT",
+            "HAIR",
+            "TIRE MARK"
+          ]
+        },
+        {
+          "name": "Weary",
+          "words": [
+            "BORE",
+            "DRAIN",
+            "EXHAUST",
+            "TIRE"
+          ]
+        }
+      ],
+      "difficulty": "medium",
+      "lastUpdated": "2025-04-28T06:26:46.740Z",
+      "isSampleData": false,
+      "metadata": {
+        "createdAt": "2025-04-28T06:26:46.740Z",
+        "lastAccessed": "2025-04-28T06:26:46.740Z",
         "accessCount": 0,
         "completionStats": {
           "totalAttempts": 0,

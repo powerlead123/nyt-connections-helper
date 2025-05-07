@@ -1,0 +1,177 @@
+/* SEO-friendly Styles */
+
+/* 响应式图片 */
+.responsive-img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1rem auto;
+}
+
+/* 语义化标题样式 */
+.article-title {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    color: #333;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.section-title {
+    font-size: clamp(1.25rem, 4vw, 2rem);
+    color: #444;
+    margin: 2rem 0 1rem;
+    line-height: 1.3;
+}
+
+.subsection-title {
+    font-size: clamp(1.1rem, 3vw, 1.75rem);
+    color: #555;
+    margin: 1.5rem 0 0.75rem;
+    line-height: 1.4;
+}
+
+/* 面包屑导航 */
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+    list-style: none;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb-item:not(:last-child)::after {
+    content: "›";
+    margin-left: 0.5rem;
+    color: #666;
+}
+
+/* 文章元数据 */
+.article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.article-date,
+.article-author,
+.article-category {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* 文章内容 */
+.article-content {
+    max-width: 70ch;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.article-content p {
+    margin-bottom: 1.5rem;
+}
+
+.article-content ul,
+.article-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+/* 相关文章 */
+.related-articles {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+}
+
+.article-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.article-card {
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.article-card:hover {
+    transform: translateY(-2px);
+}
+
+/* 社交分享 */
+.social-share {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .article-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .breadcrumb {
+        font-size: 0.9rem;
+    }
+}
+
+/* 可访问性 */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+    :root {
+        --primary: #000;
+        --primary-dark: #000;
+        --primary-light: #fff;
+    }
+    
+    .article-card {
+        border: 2px solid #000;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .social-share,
+    .share-buttons,
+    .article-card {
+        display: none;
+    }
+    
+    .article-content {
+        max-width: none;
+    }
+    
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+} 

@@ -6,9 +6,9 @@ class ArticleGenerator {
   constructor() {
     // SEO关键词配置
     this.seoKeywords = {
-      main: ['NYT Connections', 'Connections game', 'puzzle solutions', 'daily answers'],
-      related: ['word puzzles', 'brain teasers', 'word games', 'NYT Games'],
-      long_tail: ['how to solve NYT Connections', 'Connections game strategy', 'daily puzzle hints']
+      main: ['NYT Connections', 'Connections game', 'puzzle solutions', 'daily answers', 'word association game'],
+      related: ['word puzzles', 'brain teasers', 'word games', 'NYT Games', 'daily word games'],
+      long_tail: ['how to solve NYT Connections', 'Connections game strategy', 'daily puzzle hints', 'NYT Connections tips and tricks', 'best strategy for Connections game']
     };
   }
 
@@ -19,6 +19,7 @@ class ArticleGenerator {
    */
   generateHTML(puzzleData) {
     const { date, difficulty, categories } = puzzleData;
+    const canonicalUrl = `https://nyctconnections.com/puzzle/${date}`;
     
     return `
 <!DOCTYPE html>
@@ -30,19 +31,68 @@ class ArticleGenerator {
     <!-- SEO Meta Tags -->
     <meta name="description" content="Complete walkthrough and solutions for NYT Connections puzzle ${date}. Find expert hints, strategies, and answers for all categories: ${categories.map(c => c.name).join(', ')}. Daily updated guides for puzzle solving.">
     <meta name="keywords" content="${this.generateMetaKeywords(categories)}">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="${canonicalUrl}">
     
     <!-- Open Graph Tags -->
     <meta property="og:title" content="NYT Connections Solutions & Strategy Guide - ${date}">
     <meta property="og:description" content="Get expert hints and solutions for today's NYT Connections puzzle. Complete walkthrough with strategies.">
     <meta property="og:type" content="article">
+    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:site_name" content="NYCT Connections">
     <meta property="article:published_time" content="${date}T00:00:00Z">
     <meta property="article:modified_time" content="${new Date().toISOString()}">
     <meta property="article:section" content="Game Guides">
     <meta property="article:tag" content="NYT Connections,Puzzle Solutions,Word Games,Daily Hints">
     
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NYT Connections Solutions & Strategy Guide - ${date}">
+    <meta name="twitter:description" content="Get expert hints and solutions for today's NYT Connections puzzle. Complete walkthrough with strategies.">
+    
     <link rel="stylesheet" href="/css/article-style.css">
+    
+    <!-- Additional Schema.org Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "mainEntity": {
+        "@type": "Article",
+        "headline": "NYT Connections Solutions & Strategy Guide - ${date}",
+        "datePublished": "${date}T00:00:00Z",
+        "dateModified": "${new Date().toISOString()}",
+        "author": {
+          "@type": "Organization",
+          "name": "NYCT Connections"
+        }
+      },
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": ["article", ".game-intro"]
+      }
+    }
+    </script>
 </head>
 <body>
+    <!-- 面包屑导航 -->
+    <nav aria-label="breadcrumb">
+        <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+            <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <a href="/" itemprop="item"><span itemprop="name">Home</span></a>
+                <meta itemprop="position" content="1" />
+            </li>
+            <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <a href="/archive" itemprop="item"><span itemprop="name">Puzzle Archive</span></a>
+                <meta itemprop="position" content="2" />
+            </li>
+            <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <span itemprop="name">Puzzle ${date}</span>
+                <meta itemprop="position" content="3" />
+            </li>
+        </ol>
+    </nav>
+
     <article class="puzzle-solution" itemscope itemtype="https://schema.org/Article">
         <header>
             <h1 itemprop="headline">NYT Connections Solutions & Hints - ${date}</h1>
@@ -57,6 +107,7 @@ class ArticleGenerator {
                 <a href="#solutions">Complete Solutions</a>
                 <a href="#tips">Strategy Tips</a>
                 <a href="#related">Related Puzzles</a>
+                <a href="#faq">FAQ</a>
             </nav>
         </header>
 
@@ -72,16 +123,19 @@ class ArticleGenerator {
         </section>
 
         <!-- 无剧透提示部分 -->
-        <section id="hints" class="hints-section">
-            <h2>Hints (No Spoilers)</h2>
+        <section id="hints" class="hints-section" itemscope itemtype="https://schema.org/HowTo">
+            <h2 itemprop="name">How to Solve Today's Connections Puzzle</h2>
+            <meta itemprop="totalTime" content="PT10M" />
             <div class="hints-container">
                 ${categories.map((cat, index) => `
-                    <div class="hint-card">
-                        <h3>Group ${index + 1}</h3>
-                        <p class="initial-hint">${this.generateHint(cat)}</p>
-                        <div class="additional-hints">
-                            <p class="extra-hint">${this.generateExtraHint(cat)}</p>
-                            <p class="strategy-tip">${this.generateStrategyTip(cat)}</p>
+                    <div class="hint-card" itemprop="step" itemscope itemtype="https://schema.org/HowToStep">
+                        <h3 itemprop="name">Group ${index + 1}</h3>
+                        <div itemprop="text">
+                            <p class="initial-hint">${this.generateHint(cat)}</p>
+                            <div class="additional-hints">
+                                <p class="extra-hint">${this.generateExtraHint(cat)}</p>
+                                <p class="strategy-tip">${this.generateStrategyTip(cat)}</p>
+                            </div>
                         </div>
                     </div>
                 `).join('')}
@@ -133,17 +187,74 @@ class ArticleGenerator {
 
         <!-- 相关谜题 -->
         <section id="related" class="related-section">
-            <h2>Related NYT Word Puzzles</h2>
-            <div class="related-games">
-                <div class="game-card">
-                    <h3>Wordle</h3>
-                    <p>Test your word-guessing skills with the original 5-letter word game.</p>
-                    <a href="https://www.nytimes.com/games/wordle" class="game-link">Play Wordle</a>
+            <h2>Related Puzzles</h2>
+            <div class="related-puzzles">
+                <div class="similar-difficulty">
+                    <h3>More ${difficulty} Puzzles</h3>
+                    <ul>
+                        ${this.generateRelatedPuzzles(difficulty, date)}
+                    </ul>
                 </div>
-                <div class="game-card">
-                    <h3>Spelling Bee</h3>
-                    <p>Create words from seven letters in this challenging word puzzle.</p>
-                    <a href="https://www.nytimes.com/puzzles/spelling-bee" class="game-link">Play Spelling Bee</a>
+                <div class="similar-categories">
+                    <h3>Puzzles with Similar Categories</h3>
+                    <ul>
+                        ${this.generateSimilarCategoryPuzzles(categories, date)}
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ部分 -->
+        <section id="faq" class="faq-section" itemscope itemtype="https://schema.org/FAQPage">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-container">
+                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">What time does the NYT Connections puzzle reset?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <div itemprop="text">
+                            <p>The NYT Connections puzzle resets at midnight Eastern Time (ET) every day.</p>
+                        </div>
+                    </div>
+                </div>
+                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">How many attempts do you get in NYT Connections?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <div itemprop="text">
+                            <p>You get 4 attempts to solve each group in NYT Connections. Once you run out of attempts, the game is over for the day.</p>
+                        </div>
+                    </div>
+                </div>
+                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">What do the colors mean in NYT Connections?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <div itemprop="text">
+                            <p>The colors in NYT Connections indicate difficulty levels: Yellow (easiest), Green (easy), Blue (medium), and Purple (hardest).</p>
+                        </div>
+                    </div>
+                </div>
+                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">What's the best strategy for solving NYT Connections?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <div itemprop="text">
+                            <p>The best strategy is to start with the most obvious connections (usually yellow), look for common themes or patterns, and use the process of elimination. Pay attention to words that might have multiple meanings.</p>
+                        </div>
+                    </div>
+                </div>
+                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">Can I play old NYT Connections puzzles?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <div itemprop="text">
+                            <p>No, NYT Connections only offers one puzzle per day. However, you can find our archive of past solutions and explanations to learn from previous puzzles.</p>
+                        </div>
+                    </div>
+                </div>
+                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">Why are some Connections puzzles harder than others?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <div itemprop="text">
+                            <p>Puzzle difficulty varies based on factors like word ambiguity, obscure references, and the complexity of connections. Purple groups are typically the most challenging due to subtle or unexpected relationships.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -151,32 +262,23 @@ class ArticleGenerator {
         <!-- 相关链接 -->
         <footer>
             <div class="navigation">
-                <a href="/" class="nav-link">Puzzle Archive</a>
-                <a href="/latest" class="nav-link">Today's Puzzle</a>
-                <a href="/tips" class="nav-link">Strategy Guide</a>
+                <a href="/archive" class="nav-link">Puzzle Archive</a>
+                <a href="/tips" class="nav-link">Tips & Strategies</a>
+                <a href="/about" class="nav-link">About NYT Connections</a>
+                <a href="/contact" class="nav-link">Contact Us</a>
             </div>
-            <div class="metadata">
-                <p>Last updated: ${new Date().toLocaleString()}</p>
-                <p class="disclaimer">This guide is fan-made and not affiliated with The New York Times.</p>
+            <div class="social-share">
+                <h3>Share this solution:</h3>
+                <div class="share-buttons">
+                    <a href="https://twitter.com/share?url=${encodeURIComponent(canonicalUrl)}" class="twitter-share">Share on Twitter</a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonicalUrl)}" class="facebook-share">Share on Facebook</a>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; ${new Date().getFullYear()} NYCT Connections. All rights reserved.</p>
             </div>
         </footer>
     </article>
-
-    <!-- 结构化数据 -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "NYT Connections Solutions & Hints - ${date}",
-      "datePublished": "${date}T00:00:00Z",
-      "dateModified": "${new Date().toISOString()}",
-      "author": {
-        "@type": "Organization",
-        "name": "NYT Connections Guide"
-      },
-      "description": "Complete walkthrough and solutions for NYT Connections puzzle ${date}. Find expert hints and answers."
-    }
-    </script>
 </body>
 </html>`;
   }
