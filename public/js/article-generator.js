@@ -199,106 +199,106 @@ class ArticleGenerator {
 
     <main class="article-container">
         <article class="content-section" itemscope itemtype="https://schema.org/Article">
-            <header>
-                <h1 itemprop="headline">NYT Connections Solutions & Hints - ${date}</h1>
-                <div class="puzzle-metadata">
-                    <span class="difficulty-badge ${difficulty.toLowerCase()}">${difficulty} Difficulty</span>
-                    <time datetime="${date}" itemprop="datePublished">${this.formatDate(date)}</time>
-                </div>
-                
-                <!-- 快速导航 -->
-                <nav class="quick-nav">
-                    <a href="#hints">Quick Hints</a>
-                    <a href="#solutions">Complete Solutions</a>
-                    <a href="#tips">Strategy Tips</a>
-                    <a href="#related">Related Puzzles</a>
-                </nav>
-            </header>
+        <header>
+            <h1 itemprop="headline">NYT Connections Solutions & Hints - ${date}</h1>
+            <div class="puzzle-metadata">
+                <span class="difficulty-badge ${difficulty.toLowerCase()}">${difficulty} Difficulty</span>
+                <time datetime="${date}" itemprop="datePublished">${this.formatDate(date)}</time>
+            </div>
+            
+            <!-- 快速导航 -->
+            <nav class="quick-nav">
+                <a href="#hints">Quick Hints</a>
+                <a href="#solutions">Complete Solutions</a>
+                <a href="#tips">Strategy Tips</a>
+                <a href="#related">Related Puzzles</a>
+            </nav>
+        </header>
 
-            <!-- 游戏介绍 -->
-            <section class="game-intro">
-                <h2>Today's NYT Connections Puzzle</h2>
-                <p>Welcome to our daily NYT Connections puzzle guide for ${this.formatDate(date)}. Today's puzzle features an interesting mix of categories including ${categories.map(c => c.name.toLowerCase()).join(', ')}. The difficulty level is rated as ${difficulty.toLowerCase()}, making it ${this.getDifficultyDescription(difficulty)} to solve.</p>
-                
-                <div class="difficulty-explanation">
-                    <h3>What makes this puzzle ${difficulty.toLowerCase()}?</h3>
-                    <p>${this.generateDifficultyExplanation(difficulty, categories)}</p>
-                </div>
-            </section>
+        <!-- 游戏介绍 -->
+        <section class="game-intro">
+            <h2>Today's NYT Connections Puzzle</h2>
+            <p>Welcome to our daily NYT Connections puzzle guide for ${this.formatDate(date)}. Today's puzzle features an interesting mix of categories including ${categories.map(c => c.name.toLowerCase()).join(', ')}. The difficulty level is rated as ${difficulty.toLowerCase()}, making it ${this.getDifficultyDescription(difficulty)} to solve.</p>
+            
+            <div class="difficulty-explanation">
+                <h3>What makes this puzzle ${difficulty.toLowerCase()}?</h3>
+                <p>${this.generateDifficultyExplanation(difficulty, categories)}</p>
+            </div>
+        </section>
 
-            <!-- 无剧透提示部分 -->
-            <section id="hints" class="hints-section">
-                <h2>Hints (No Spoilers)</h2>
-                <div class="hints-container">
-                    ${categories.map((cat, index) => `
-                        <div class="hint-card">
-                            <h3>Group ${index + 1}</h3>
-                            <p class="initial-hint">${this.generateHint(cat)}</p>
-                            <div class="additional-hints">
-                                <p class="extra-hint">${this.generateExtraHint(cat)}</p>
-                                <p class="strategy-tip">${this.generateStrategyTip(cat)}</p>
+        <!-- 无剧透提示部分 -->
+        <section id="hints" class="hints-section">
+            <h2>Hints (No Spoilers)</h2>
+            <div class="hints-container">
+                ${categories.map((cat, index) => `
+                    <div class="hint-card">
+                        <h3>Group ${index + 1}</h3>
+                        <p class="initial-hint">${this.generateHint(cat)}</p>
+                        <div class="additional-hints">
+                            <p class="extra-hint">${this.generateExtraHint(cat)}</p>
+                            <p class="strategy-tip">${this.generateStrategyTip(cat)}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+
+        <!-- 完整解答部分 -->
+        <section id="solutions" class="solutions-section">
+            <h2>Complete Solutions</h2>
+            <div class="solutions-container">
+                ${categories.map((cat, index) => `
+                    <div class="solution-card ${this.getCategoryColor(index)}">
+                        <h3>${cat.name}</h3>
+                        <ul class="word-list">
+                            ${cat.words.map(word => `
+                                <li>${word}</li>
+                            `).join('')}
+                        </ul>
+                        <div class="solution-details">
+                            <p class="explanation">${this.generateExplanation(cat)}</p>
+                            <div class="knowledge-box">
+                                <h4>Did you know?</h4>
+                                <p>${this.generateTrivia(cat)}</p>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            </section>
-
-            <!-- 完整解答部分 -->
-            <section id="solutions" class="solutions-section">
-                <h2>Complete Solutions</h2>
-                <div class="solutions-container">
-                    ${categories.map((cat, index) => `
-                        <div class="solution-card ${this.getCategoryColor(index)}">
-                            <h3>${cat.name}</h3>
-                            <ul class="word-list">
-                                ${cat.words.map(word => `
-                                    <li>${word}</li>
-                                `).join('')}
-                            </ul>
-                            <div class="solution-details">
-                                <p class="explanation">${this.generateExplanation(cat)}</p>
-                                <div class="knowledge-box">
-                                    <h4>Did you know?</h4>
-                                    <p>${this.generateTrivia(cat)}</p>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </section>
-
-            <!-- 策略和技巧 -->
-            <section id="tips" class="strategy-section">
-                <h2>Strategy Tips for NYT Connections</h2>
-                <div class="tips-container">
-                    <div class="general-tips">
-                        <h3>General Strategies</h3>
-                        <ul>
-                            ${this.generateGeneralTips()}
-                        </ul>
                     </div>
-                    <div class="specific-tips">
-                        <h3>Tips for Today's Puzzle</h3>
-                        <ul>
-                            ${this.generateSpecificTips(categories)}
-                        </ul>
-                    </div>
-                </div>
-            </section>
+                `).join('')}
+            </div>
+        </section>
 
-            <!-- 相关链接 -->
-            <footer>
-                <div class="navigation">
-                    <a href="/" class="nav-link">Puzzle Archive</a>
-                    <a href="/latest" class="nav-link">Today's Puzzle</a>
-                    <a href="/tips" class="nav-link">Strategy Guide</a>
+        <!-- 策略和技巧 -->
+        <section id="tips" class="strategy-section">
+            <h2>Strategy Tips for NYT Connections</h2>
+            <div class="tips-container">
+                <div class="general-tips">
+                    <h3>General Strategies</h3>
+                    <ul>
+                        ${this.generateGeneralTips()}
+                    </ul>
                 </div>
-                <div class="metadata">
-                    <p>Last updated: ${new Date().toLocaleString()}</p>
-                    <p class="disclaimer">This guide is fan-made and not affiliated with The New York Times.</p>
+                <div class="specific-tips">
+                    <h3>Tips for Today's Puzzle</h3>
+                    <ul>
+                        ${this.generateSpecificTips(categories)}
+                    </ul>
                 </div>
-            </footer>
-        </article>
+            </div>
+        </section>
+
+        <!-- 相关链接 -->
+        <footer>
+            <div class="navigation">
+                <a href="/" class="nav-link">Puzzle Archive</a>
+                <a href="/latest" class="nav-link">Today's Puzzle</a>
+                <a href="/tips" class="nav-link">Strategy Guide</a>
+            </div>
+            <div class="metadata">
+                <p>Last updated: ${new Date().toLocaleString()}</p>
+                <p class="disclaimer">This guide is fan-made and not affiliated with The New York Times.</p>
+            </div>
+        </footer>
+    </article>
     </main>
 
     <!-- 页脚导航 -->
