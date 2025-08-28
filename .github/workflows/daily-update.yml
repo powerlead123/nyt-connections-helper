@@ -1,0 +1,21 @@
+name: Daily NYT Connections Update
+
+on:
+  schedule:
+    # 每天早上6点UTC (北京时间下午2点) 运行
+    - cron: '0 6 * * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  update-puzzle:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Trigger Daily Update
+      run: |
+        curl -X POST "https://nyt-connections-helper.pages.dev/functions/scheduled" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "action": "daily-update",
+            "secret": "${{ secrets.CRON_SECRET }}"
+          }'
