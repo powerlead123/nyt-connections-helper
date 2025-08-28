@@ -18,4 +18,5 @@ jobs:
           -d '{
             "action": "daily-update",
             "secret": "${{ secrets.CRON_SECRET }}"
-          }'
+          }'# 
+Auto-update daily puzzle data
