@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Panel</title>
+</head>
+<body>
+    <h1>🔧 Admin Panel Test</h1>
+    <p>If you can see this page, the routing is working!</p>
+    <p>Current time: <span id="time"></span></p>
+    
+    <h2>Quick Tests:</h2>
+    <button onclick="testAPI()">Test API</button>
+    <button onclick="testScheduled()">Test Scheduled Function</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        
+        async function testAPI() {
+            try {
+                const response = await fetch('/api/today');
+                const data = await response.json();
+                document.getElementById('results').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('results').innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testScheduled() {
+            try {
+                const response = await fetch('/functions/scheduled', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: 'daily-update',
+                        secret: 'nyt-helper-secret-2025'
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('results').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('results').innerHTML = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
