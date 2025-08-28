@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>NYT Connections Game Helper - Daily Puzzle Solver & Hints</title>
+    <meta name="description" content="Play today's NYT Connections puzzle with AI-powered hints and assistance. Get theme hints, difficulty clues, and word suggestions to solve the daily word grouping game.">
+    <meta name="keywords" content="NYT Connections, New York Times Connections, word puzzle, daily puzzle, connections game, word grouping, puzzle solver, connections hints, connections answers">
+    <meta name="author" content="Connections Game Helper">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yoursite.com/">
+    
+    <!-- Open Graph Meta Tags for Social Media -->
+    <meta property="og:title" content="NYT Connections Game Helper - Daily Puzzle Solver">
+    <meta property="og:description" content="Play today's NYT Connections puzzle with AI-powered hints. Get smart assistance to solve the daily word grouping challenge.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yoursite.com/">
+    <meta property="og:image" content="https://yoursite.com/og-image.jpg">
+    <meta property="og:site_name" content="Connections Game Helper">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NYT Connections Game Helper - Daily Puzzle Solver">
+    <meta name="twitter:description" content="Play today's NYT Connections puzzle with AI-powered hints and assistance.">
+    <meta name="twitter:image" content="https://yoursite.com/twitter-image.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "NYT Connections Game Helper",
+        "description": "AI-powered helper for the New York Times Connections daily word puzzle game",
+        "url": "https://yoursite.com/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Connections Game Helper"
+        },
+        "gameItem": {
+            "@type": "Game",
+            "name": "NYT Connections",
+            "description": "Daily word grouping puzzle game",
+            "genre": "Word Puzzle"
+        }
+    }
+    </script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">NYT Connections Game Helper</h1>
+            <p class="text-gray-600">Today's New York Times Connections Puzzle - Interactive AI Hint System</p>
+            
+            <!-- Puzzle Date Display -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4 mb-2 inline-block">
+                <div class="flex items-center justify-center gap-2">
+                    <span class="text-blue-600">📅</span>
+                    <span class="text-lg font-semibold text-blue-800" id="puzzleDate">Loading puzzle date...</span>
+                    <span class="text-blue-600" id="puzzleStatus">🔄</span>
+                </div>
+                <div class="text-sm text-blue-600 mt-1" id="puzzleInfo">Fetching today's puzzle...</div>
+            </div>
+            
+            <p class="text-sm text-gray-500 mt-2">Get smart hints and play the daily word grouping challenge with AI assistance</p>
+            
+            <!-- Navigation Links -->
+            <div class="flex justify-center space-x-4 mt-4 text-sm">
+                <a href="/today" class="text-blue-600 hover:text-blue-800">Today's Puzzle</a>
+                <a href="/help" class="text-blue-600 hover:text-blue-800">How to Play</a>
+                <a href="/archive" class="text-blue-600 hover:text-blue-800">📚 Solutions Archive</a>
+                <a href="#about" class="text-blue-600 hover:text-blue-800">About</a>
+            </div>
+        </header>
+
+        <!-- Game Status Bar -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <span class="text-lg font-semibold">Attempts: <span id="mistakesCount" class="text-blue-600">0</span></span>
+                    <span class="text-lg font-semibold">Groups found: <span id="groupsFound" class="text-green-600">0</span>/4</span>
+                </div>
+                <button id="shuffleBtn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    🔀 Shuffle
+                </button>
+            </div>
+        </div>
+
+        <!-- Completed Groups Display -->
+        <div id="completedGroups" class="mb-6 space-y-3">
+            <!-- Completed groups will be displayed here -->
+        </div>
+
+        <!-- Game Area -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Select four words that share something in common</h2>
+            <div class="grid grid-cols-4 gap-3 mb-4" id="wordsGrid">
+                <!-- Words will be loaded dynamically via JavaScript -->
+            </div>
+            
+            <!-- Game Control Buttons -->
+            <div class="flex gap-3 justify-center">
+                <button id="deselectBtn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50" disabled>
+                    Deselect All
+                </button>
+                <button id="submitBtn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50" disabled>
+                    Submit
+                </button>
+            </div>
+            
+            <!-- Game Messages -->
+            <div id="gameMessage" class="mt-4 text-center text-lg font-semibold"></div>
+        </div>
+
+        <!-- AI Assistant Chat Area -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">🤖 AI Assistant</h2>
+            
+            <div class="chat-container h-64 overflow-y-auto border rounded-lg p-4 mb-4 bg-gray-50" id="chatContainer">
+                <div class="assistant-message mb-3">
+                    <div class="bg-blue-100 rounded-lg p-3 inline-block">
+                        👋 Hello! I'm your Connections assistant. Need some hints?
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 flex-wrap mb-4" id="hintButtons">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors" onclick="requestHint('theme')">
+                    🎯 Theme Hint
+                </button>
+                <button class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors" onclick="requestHint('difficulty')">
+                    🌈 Difficulty Hint
+                </button>
+                <button class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors" onclick="requestHint('word')">
+                    💡 Word Hint
+                </button>
+                <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors" onclick="showAnswer()">
+                    🔍 Show Answer
+                </button>
+                <button class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors" onclick="restartGame()">
+                    🔄 Restart Game
+                </button>
+            </div>
+        </div>
+
+        <!-- Today's Article Link -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-md p-6 mt-6 text-white text-center">
+            <h3 class="text-xl font-bold mb-2">📖 Want the Complete Solution?</h3>
+            <p class="mb-4">Get detailed explanations, solving strategies, and all answers in our comprehensive daily guide!</p>
+            <a href="#" id="todayArticleLink" class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block">
+                📚 Read Today's Complete Guide
+            </a>
+        </div>
+
+        <!-- SEO Content Section -->
+        <div id="about" class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">About NYT Connections Game Helper</h2>
+            <div class="prose max-w-none text-gray-700">
+                <p class="mb-4">
+                    Welcome to the ultimate <strong>NYT Connections Game Helper</strong>! Our AI-powered assistant helps you solve the daily New York Times Connections puzzle with smart hints and interactive gameplay.
+                </p>
+                
+                <h3 class="text-xl font-semibold mb-3">How to Play Connections</h3>
+                <p class="mb-4">
+                    The <strong>Connections word puzzle</strong> challenges you to find groups of four words that share something in common. Each puzzle contains exactly 16 words that form 4 groups of 4 words each. Groups are color-coded by difficulty:
+                </p>
+                <ul class="list-disc list-inside mb-4 space-y-1">
+                    <li><span class="text-green-600 font-semibold">Green</span> - Easiest category</li>
+                    <li><span class="text-yellow-600 font-semibold">Yellow</span> - Easy category</li>
+                    <li><span class="text-blue-600 font-semibold">Blue</span> - Hard category</li>
+                    <li><span class="text-purple-600 font-semibold">Purple</span> - Hardest category</li>
+                </ul>
+                
+                <h3 class="text-xl font-semibold mb-3">Features</h3>
+                <ul class="list-disc list-inside mb-4 space-y-1">
+                    <li><strong>Daily Puzzle Updates</strong> - Fresh Connections puzzles every day</li>
+                    <li><strong>AI-Powered Hints</strong> - Get theme hints, difficulty clues, and word suggestions</li>
+                    <li><strong>Interactive Gameplay</strong> - Play directly on our site with full game mechanics</li>
+                    <li><strong>Smart Assistant</strong> - Chat with our AI for personalized help</li>
+                    <li><strong>Progress Tracking</strong> - Monitor your mistakes and completed groups</li>
+                </ul>
+                
+                <h3 class="text-xl font-semibold mb-3">Tips for Solving Connections</h3>
+                <ul class="list-disc list-inside mb-4 space-y-1">
+                    <li>Look for obvious categories first (colors, animals, etc.)</li>
+                    <li>Consider multiple meanings of words</li>
+                    <li>Think about wordplay and puns</li>
+                    <li>Use our hint system when you're stuck</li>
+                    <li>Remember that red herrings are common</li>
+                </ul>
+                
+                <p class="text-sm text-gray-600">
+                    <strong>Disclaimer:</strong> This is an unofficial helper tool for the New York Times Connections puzzle. We are not affiliated with The New York Times.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="text-center">
+                <h3 class="text-lg font-semibold mb-2">Connections Game Helper</h3>
+                <p class="text-gray-300 mb-4">Your daily companion for NYT Connections puzzles</p>
+                <div class="flex justify-center space-x-6 text-sm">
+                    <a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Terms of Service</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Contact</a>
+                </div>
+                <p class="text-xs text-gray-400 mt-4">
+                    © 2025 Connections Game Helper. Not affiliated with The New York Times.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

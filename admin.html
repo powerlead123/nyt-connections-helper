@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections 数据管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Connections 数据管理</h1>
+            <p class="text-gray-600">手动输入今日真实数据</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">输入今日谜题数据</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 第一组 -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-2">第一组 (绿色 - 最简单)</h3>
+                    <input type="text" id="theme1" placeholder="主题" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="word1_1" placeholder="单词1" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word1_2" placeholder="单词2" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word1_3" placeholder="单词3" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word1_4" placeholder="单词4" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="hint1" placeholder="提示" class="w-full p-2 border rounded">
+                </div>
+
+                <!-- 第二组 -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-2">第二组 (黄色 - 简单)</h3>
+                    <input type="text" id="theme2" placeholder="主题" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="word2_1" placeholder="单词1" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word2_2" placeholder="单词2" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word2_3" placeholder="单词3" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word2_4" placeholder="单词4" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="hint2" placeholder="提示" class="w-full p-2 border rounded">
+                </div>
+
+                <!-- 第三组 -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-2">第三组 (蓝色 - 困难)</h3>
+                    <input type="text" id="theme3" placeholder="主题" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="word3_1" placeholder="单词1" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word3_2" placeholder="单词2" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word3_3" placeholder="单词3" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word3_4" placeholder="单词4" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="hint3" placeholder="提示" class="w-full p-2 border rounded">
+                </div>
+
+                <!-- 第四组 -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-2">第四组 (紫色 - 最困难)</h3>
+                    <input type="text" id="theme4" placeholder="主题" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="word4_1" placeholder="单词1" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word4_2" placeholder="单词2" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word4_3" placeholder="单词3" class="w-full mb-1 p-2 border rounded">
+                    <input type="text" id="word4_4" placeholder="单词4" class="w-full mb-2 p-2 border rounded">
+                    <input type="text" id="hint4" placeholder="提示" class="w-full p-2 border rounded">
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <button onclick="submitData()" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                    提交数据
+                </button>
+                <button onclick="loadExample()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors ml-4">
+                    加载示例
+                </button>
+            </div>
+
+            <div id="result" class="mt-4 p-4 rounded-lg hidden"></div>
+        </div>
+
+        <div class="text-center">
+            <a href="/" class="text-blue-500 hover:text-blue-700">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        function loadExample() {
+            // 加载一个示例数据
+            document.getElementById('theme1').value = '水果';
+            document.getElementById('word1_1').value = 'APPLE';
+            document.getElementById('word1_2').value = 'BANANA';
+            document.getElementById('word1_3').value = 'ORANGE';
+            document.getElementById('word1_4').value = 'GRAPE';
+            document.getElementById('hint1').value = '这些都是常见的水果';
+
+            document.getElementById('theme2').value = '颜色';
+            document.getElementById('word2_1').value = 'RED';
+            document.getElementById('word2_2').value = 'BLUE';
+            document.getElementById('word2_3').value = 'GREEN';
+            document.getElementById('word2_4').value = 'YELLOW';
+            document.getElementById('hint2').value = '这些都是基本颜色';
+
+            document.getElementById('theme3').value = '动物';
+            document.getElementById('word3_1').value = 'CAT';
+            document.getElementById('word3_2').value = 'DOG';
+            document.getElementById('word3_3').value = 'BIRD';
+            document.getElementById('word3_4').value = 'FISH';
+            document.getElementById('hint3').value = '这些都是常见的宠物';
+
+            document.getElementById('theme4').value = '运动';
+            document.getElementById('word4_1').value = 'SOCCER';
+            document.getElementById('word4_2').value = 'TENNIS';
+            document.getElementById('word4_3').value = 'GOLF';
+            document.getElementById('word4_4').value = 'BOXING';
+            document.getElementById('hint4').value = '这些都是体育运动';
+        }
+
+        async function submitData() {
+            const difficulties = ['green', 'yellow', 'blue', 'purple'];
+            const groups = [];
+            const allWords = [];
+
+            for (let i = 1; i <= 4; i++) {
+                const theme = document.getElementById(`theme${i}`).value.trim();
+                const words = [
+                    document.getElementById(`word${i}_1`).value.trim().toUpperCase(),
+                    document.getElementById(`word${i}_2`).value.trim().toUpperCase(),
+                    document.getElementById(`word${i}_3`).value.trim().toUpperCase(),
+                    document.getElementById(`word${i}_4`).value.trim().toUpperCase()
+                ];
+                const hint = document.getElementById(`hint${i}`).value.trim();
+
+                if (!theme || words.some(w => !w) || !hint) {
+                    showResult('请填写所有字段', 'error');
+                    return;
+                }
+
+                groups.push({
+                    theme: theme,
+                    words: words,
+                    difficulty: difficulties[i-1],
+                    hint: hint
+                });
+
+                allWords.push(...words);
+            }
+
+            try {
+                const response = await fetch('/api/manual-input', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        words: allWords,
+                        groups: groups
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('数据提交成功！', 'success');
+                } else {
+                    showResult('提交失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showResult('提交失败: ' + error.message, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `mt-4 p-4 rounded-lg ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            resultDiv.textContent = message;
+            resultDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                resultDiv.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections 调试页面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+    <div class="container mx-auto max-w-4xl">
+        <h1 class="text-3xl font-bold mb-6">Connections 数据调试</h1>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">原始数据</h2>
+            <pre id="rawData" class="bg-gray-100 p-4 rounded text-sm overflow-auto"></pre>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">单词数组</h2>
+            <div id="wordsArray" class="bg-gray-100 p-4 rounded"></div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">单词网格</h2>
+            <div class="grid grid-cols-4 gap-3" id="wordsGrid"></div>
+        </div>
+        
+        <button onclick="loadData()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            🔄 重新加载数据
+        </button>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                console.log('🔍 开始加载数据...');
+                
+                const response = await fetch('/api/today');
+                const data = await response.json();
+                
+                console.log('📊 收到的数据:', data);
+                
+                // 显示原始数据
+                document.getElementById('rawData').textContent = JSON.stringify(data, null, 2);
+                
+                // 显示单词数组
+                const wordsArrayDiv = document.getElementById('wordsArray');
+                if (data.words && Array.isArray(data.words)) {
+                    wordsArrayDiv.innerHTML = `
+                        <p><strong>单词数量:</strong> ${data.words.length}</p>
+                        <p><strong>单词列表:</strong></p>
+                        <ul class="list-disc list-inside">
+                            ${data.words.map((word, index) => `<li>${index + 1}. "${word}" (长度: ${word.length})</li>`).join('')}
+                        </ul>
+                    `;
+                } else {
+                    wordsArrayDiv.innerHTML = '<p class="text-red-500">❌ 单词数据格式错误</p>';
+                }
+                
+                // 显示单词网格
+                const wordsGrid = document.getElementById('wordsGrid');
+                wordsGrid.innerHTML = '';
+                
+                if (data.words && Array.isArray(data.words)) {
+                    // 随机打乱单词
+                    const shuffledWords = [...data.words].sort(() => Math.random() - 0.5);
+                    
+                    shuffledWords.forEach((word, index) => {
+                        const wordElement = document.createElement('div');
+                        wordElement.className = 'bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-center font-semibold hover:bg-gray-200 cursor-pointer transition-colors';
+                        wordElement.textContent = word;
+                        wordElement.title = `单词 ${index + 1}: "${word}" (长度: ${word.length})`;
+                        wordsGrid.appendChild(wordElement);
+                    });
+                } else {
+                    wordsGrid.innerHTML = '<div class="col-span-4 text-center text-red-500">❌ 无法显示单词网格</div>';
+                }
+                
+            } catch (error) {
+                console.error('❌ 加载失败:', error);
+                document.getElementById('rawData').textContent = `错误: ${error.message}`;
+                document.getElementById('wordsArray').innerHTML = '<p class="text-red-500">❌ 加载失败</p>';
+                document.getElementById('wordsGrid').innerHTML = '<div class="col-span-4 text-center text-red-500">❌ 加载失败</div>';
+            }
+        }
+        
+        // 页面加载时自动加载数据
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
