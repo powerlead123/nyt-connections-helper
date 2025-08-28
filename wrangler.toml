@@ -13,3 +13,7 @@ id = "7d0ba7d76b4946f5b33bd584bc082c7b"
 ENVIRONMENT = "production"
 SITE_URL = "https://nyt-connections-helper.pages.dev"
 CRON_SECRET = "nyt-helper-secret-2025"
+
+# Cron triggers for automated daily updates
+[[env.production.triggers]]
+crons = ["0 6 * * *"]  # 每天早上6点UTC (北京时间下午2点)
