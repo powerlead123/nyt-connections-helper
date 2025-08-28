@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYT Connections Helper - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .admin-btn {
+            @apply bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2;
+        }
+        .admin-btn.primary {
+            @apply bg-green-500 hover:bg-green-600;
+        }
+        .admin-btn:disabled {
+            @apply bg-gray-400 cursor-not-allowed;
+        }
+        .status-message {
+            @apply p-3 rounded-lg mb-4;
+        }
+        .status-success {
+            @apply bg-green-100 text-green-800 border border-green-200;
+        }
+        .status-error {
+            @apply bg-red-100 text-red-800 border border-red-200;
+        }
+        .status-info {
+            @apply bg-blue-100 text-blue-800 border border-blue-200;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">🔧 NYT Connections Helper</h1>
+            <h2 class="text-xl text-gray-600 mb-4">Admin Management Panel</h2>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <p class="text-sm text-gray-500">Manage your automated NYT Connections helper system</p>
+            </div>
+        </header>
+
+        <!-- Status Messages -->
+        <div id="statusContainer"></div>
+
+        <!-- System Status -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">📊 System Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-gray-700">Last Update</h3>
+                    <p id="lastUpdate" class="text-sm text-gray-500">Loading...</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-gray-700">Data Source</h3>
+                    <p id="dataSource" class="text-sm text-gray-500">Loading...</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-gray-700">Cache Status</h3>
+                    <p id="cacheStatus" class="text-sm text-gray-500">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">🔄 Data Management</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button onclick="refreshData()" class="admin-btn">
+                    <span>🔄</span>
+                    Refresh Today's Data
+                </button>
+                <button onclick="clearCache()" class="admin-btn">
+                    <span>🗑️</span>
+                    Clear Cache
+                </button>
+                <button onclick="triggerScrape()" class="admin-btn">
+                    <span>🕷️</span>
+                    Scrape New Data
+                </button>
+                <button onclick="generateArticle()" class="admin-btn">
+                    <span>📝</span>
+                    Generate Article
+                </button>
+                <button onclick="runDailyUpdate()" class="admin-btn primary">
+                    <span>⚡</span>
+                    Run Daily Update
+                </button>
+                <button onclick="testAPI()" class="admin-btn">
+                    <span>🧪</span>
+                    Test API
+                </button>
+            </div>
+        </div>
+
+        <!-- Current Puzzle Preview -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">🎯 Current Puzzle Preview</h2>
+            <div id="puzzlePreview" class="text-gray-500">
+                Loading puzzle data...
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">📋 Activity Logs</h2>
+            <div id="activityLogs" class="bg-gray-50 p-4 rounded-lg h-64 overflow-y-auto text-sm font-mono">
+                <div class="text-gray-500">System ready. Click any action button to see logs...</div>
+            </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-8">
+            <a href="/" class="text-blue-500 hover:text-blue-600 underline">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemStatus();
+            loadPuzzlePreview();
+        });
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const container = document.getElementById('statusContainer');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            
+            container.appendChild(statusDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 5000);
+            
+            // Add to logs
+            addLog(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // Add log entry
+        function addLog(message) {
+            const logs = document.getElementById('activityLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span class="text-gray-400">[${timestamp}]</span> ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/today');
+                const data = await response.json();
+                
+                document.getElementById('lastUpdate').textContent = new Date(data.date).toLocaleString();
+                document.getElementById('dataSource').textContent = data.source || 'Unknown';
+                document.getElementById('cacheStatus').textContent = 'Active';
+                
+            } catch (error) {
+                document.getElementById('lastUpdate').textContent = 'Error loading';
+                document.getElementById('dataSource').textContent = 'Error';
+                document.getElementById('cacheStatus').textContent = 'Error';
+            }
+        }
+
+        // Load puzzle preview
+        async function loadPuzzlePreview() {
+            try {
+                const response = await fetch('/api/today');
+                const data = await response.json();
+                
+                let preview = `<div class="mb-2"><strong>Date:</strong> ${data.date}</div>`;
+                preview += `<div class="mb-2"><strong>Source:</strong> ${data.source}</div>`;
+                preview += `<div class="mb-2"><strong>Words:</strong> ${data.words.join(', ')}</div>`;
+                
+                if (data.groups) {
+                    preview += '<div class="mt-4"><strong>Groups:</strong></div>';
+                    data.groups.forEach((group, index) => {
+                        const colors = ['🟢', '🟡', '🔵', '🟣'];
+                        preview += `<div class="ml-4 mb-1">${colors[index]} ${group.theme}: ${group.words.join(', ')}</div>`;
+                    });
+                }
+                
+                document.getElementById('puzzlePreview').innerHTML = preview;
+                
+            } catch (error) {
+                document.getElementById('puzzlePreview').innerHTML = '<div class="text-red-500">Error loading puzzle data</div>';
+            }
+        }
+
+        // Refresh data
+        async function refreshData() {
+            showStatus('Refreshing data...', 'info');
+            
+            try {
+                const response = await fetch('/api/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'refresh' })
+                });
+                
+                if (response.ok) {
+                    showStatus('Data refreshed successfully!', 'success');
+                    loadSystemStatus();
+                    loadPuzzlePreview();
+                } else {
+                    showStatus('Failed to refresh data', 'error');
+                }
+            } catch (error) {
+                showStatus('Error refreshing data: ' + error.message, 'error');
+            }
+        }
+
+        // Clear cache
+        async function clearCache() {
+            showStatus('Clearing cache...', 'info');
+            
+            try {
+                const response = await fetch('/api/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'clear-cache' })
+                });
+                
+                if (response.ok) {
+                    showStatus('Cache cleared successfully!', 'success');
+                } else {
+                    showStatus('Failed to clear cache', 'error');
+                }
+            } catch (error) {
+                showStatus('Error clearing cache: ' + error.message, 'error');
+            }
+        }
+
+        // Trigger scrape
+        async function triggerScrape() {
+            showStatus('Scraping new data...', 'info');
+            
+            try {
+                const response = await fetch('/functions/scheduled', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        action: 'scrape-data',
+                        secret: 'nyt-helper-secret-2025'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('Data scraped successfully!', 'success');
+                    loadSystemStatus();
+                    loadPuzzlePreview();
+                } else {
+                    showStatus('Scraping failed: ' + (result.error || result.reason), 'error');
+                }
+            } catch (error) {
+                showStatus('Error scraping data: ' + error.message, 'error');
+            }
+        }
+
+        // Generate article
+        async function generateArticle() {
+            showStatus('Generating article...', 'info');
+            
+            try {
+                const response = await fetch('/functions/scheduled', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        action: 'generate-article',
+                        secret: 'nyt-helper-secret-2025'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('Article generated successfully!', 'success');
+                } else {
+                    showStatus('Article generation failed: ' + (result.error || result.reason), 'error');
+                }
+            } catch (error) {
+                showStatus('Error generating article: ' + error.message, 'error');
+            }
+        }
+
+        // Run daily update
+        async function runDailyUpdate() {
+            showStatus('Running daily update (scrape + article)...', 'info');
+            
+            try {
+                const response = await fetch('/functions/scheduled', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        action: 'daily-update',
+                        secret: 'nyt-helper-secret-2025'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('Daily update completed successfully!', 'success');
+                    console.log('Update result:', result.result);
+                    loadSystemStatus();
+                    loadPuzzlePreview();
+                } else {
+                    showStatus('Daily update failed: ' + (result.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showStatus('Error running daily update: ' + error.message, 'error');
+            }
+        }
+
+        // Test API
+        async function testAPI() {
+            showStatus('Testing API endpoints...', 'info');
+            
+            try {
+                // Test /api/today
+                const todayResponse = await fetch('/api/today');
+                if (todayResponse.ok) {
+                    showStatus('✅ /api/today - Working', 'success');
+                } else {
+                    showStatus('❌ /api/today - Failed', 'error');
+                }
+                
+                // Test /api/refresh
+                const refreshResponse = await fetch('/api/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'test' })
+                });
+                
+                if (refreshResponse.ok) {
+                    showStatus('✅ /api/refresh - Working', 'success');
+                } else {
+                    showStatus('❌ /api/refresh - Failed', 'error');
+                }
+                
+            } catch (error) {
+                showStatus('API test error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
