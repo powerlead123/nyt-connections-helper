@@ -7,7 +7,7 @@ name = "nyt-connections-helper"
 
 [[env.production.kv_namespaces]]
 binding = "CONNECTIONS_KV"
-id = "your-kv-namespace-id"
+id = "7d0ba7d76b4946f5b33bd584bc082c7b"
 
 [env.production.vars]
 ENVIRONMENT = "production"
