@@ -12,8 +12,4 @@ id = "your-kv-namespace-id"
 [env.production.vars]
 ENVIRONMENT = "production"
 SITE_URL = "https://nyt-connections-helper.pages.dev"
-CRON_SECRET = "your-secret-key-here"
-
-# Cron triggers for automatic updates
-[triggers]
-crons = ["0 6 * * *"]  # 每天 UTC 6:00 (北京时间 14:00) 执行
+CRON_SECRET = "nyt-helper-secret-2025"
