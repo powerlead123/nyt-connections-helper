@@ -1,9 +1,19 @@
 name = "nyt-connections-helper"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-08-28"
+pages_build_output_dir = "."
 
 [env.production]
 name = "nyt-connections-helper"
 
-[[env.production.routes]]
-pattern = "*"
-zone_name = "your-domain.com"  # 替换为你的域名，或删除这部分使用 .pages.dev 域名
+[[env.production.kv_namespaces]]
+binding = "CONNECTIONS_KV"
+id = "your-kv-namespace-id"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+SITE_URL = "https://nyt-connections-helper.pages.dev"
+CRON_SECRET = "your-secret-key-here"
+
+# Cron triggers for automatic updates
+[triggers]
+crons = ["0 6 * * *"]  # 每天 UTC 6:00 (北京时间 14:00) 执行
