@@ -1,5 +1,15 @@
 # API redirects for Cloudflare Functions
 /api/* /api/:splat 200
 
-# SPA fallback
-/* /index.html 200
+# Static file serving - let existing files be served directly
+/connections-today.html /connections-today.html 200
+/connections-help.html /connections-help.html 200
+/connections-answers.html /connections-answers.html 200
+/management.html /management.html 200
+/admin.html /admin.html 200
+/test-admin.html /test-admin.html 200
+
+# SPA fallback for non-existing routes only
+/today /connections-today.html 200
+/help /connections-help.html 200
+/archive /connections-answers.html 200
