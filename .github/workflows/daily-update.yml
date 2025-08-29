@@ -1,5 +1,4 @@
 name: Daily NYT Connections Update
-# Updated with proper secret configuration
 
 on:
   schedule:
@@ -9,12 +8,9 @@ on:
 jobs:
   update-puzzle:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Trigger Daily Update
-      env:
-        CRON_SECRET: ${{ secrets.CRON_SECRET }}
-      run: |
-        curl -X POST "https://nyt-connections-helper.pages.dev/scheduled" \
-          -H "Content-Type: application/json" \
-          -d '{"action": "daily-update", "secret": "'$CRON_SECRET'"}'
+      - name: Trigger Daily Update
+        run: |
+          curl -X POST https://nyt-connections-helper.pages.dev/scheduled \
+            -H "Content-Type: application/json" \
+            -d '{"action":"daily-update","secret":"${{ secrets.CRON_SECRET }}"}'
