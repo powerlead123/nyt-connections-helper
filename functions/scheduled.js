@@ -216,14 +216,210 @@ Visit [NYT Games](https://www.nytimes.com/games/connections) to play today's puz
     return article;
 }
 
-// 简化版的数据获取函数
-async function fetchFromNYT() {
-    // 简化版实现
-    return null;
+// 从Mashable获取数据
+async function fetchFromMashable() {
+    try {
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        const [year, month, day] = dateStr.split('-');
+        
+        // 尝试多种URL格式
+        const urls = [
+            `https://mashable.com/article/nyt-connections-hint-answer-today-${month}-${day}-${year}`,
+            `https://mashable.com/article/nyt-connections-answer-today-${month}-${day}-${year}`,
+            `https://mashable.com/article/connections-hint-answer-today-${month}-${day}-${year}`
+        ];
+        
+        for (const url of urls) {
+            try {
+                console.log(`Trying URL: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Accept-Encoding': 'gzip, deflate, br',
+                        'DNT': '1',
+                        'Connection': 'keep-alive',
+                        'Upgrade-Insecure-Requests': '1',
+                        'Sec-Fetch-Dest': 'document',
+                        'Sec-Fetch-Mode': 'navigate',
+                        'Sec-Fetch-Site': 'none',
+                        'Cache-Control': 'max-age=0'
+                    },
+                    signal: AbortSignal.timeout(10000) // 10秒超时
+                });
+                
+                if (!response.ok) {
+                    console.log(`URL failed with status: ${response.status}`);
+                    continue;
+                }
+                
+                const html = await response.text();
+                console.log(`Successfully fetched HTML, length: ${html.length}`);
+                
+                // 解析数据
+                const puzzleData = parseMashableHTML(html, dateStr);
+                if (puzzleData) {
+                    console.log('Successfully parsed Mashable data');
+                    return puzzleData;
+                }
+                
+            } catch (error) {
+                console.log(`URL ${url} failed:`, error.message);
+                continue;
+            }
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('Mashable fetch error:', error);
+        return null;
+    }
 }
 
-async function fetchFromMashable() {
-    // 简化版实现
+// 解析Mashable HTML内容
+function parseMashableHTML(html, dateStr) {
+    try {
+        const groups = [];
+        
+        // 多种解析策略
+        
+        // 策略1: 查找标准答案格式
+        const answerPatterns = [
+            /(?:Green|Yellow|Blue|Purple)[\s\S]*?:([\s\S]*?)(?=(?:Green|Yellow|Blue|Purple)|$)/gi,
+            /(?:🟢|🟡|🔵|🟣)[\s\S]*?:([\s\S]*?)(?=(?:🟢|🟡|🔵|🟣)|$)/gi,
+            /<strong[^>]*>(?:Green|Yellow|Blue|Purple)[^<]*<\/strong>([\s\S]*?)(?=<strong[^>]*>(?:Green|Yellow|Blue|Purple)|$)/gi
+        ];
+        
+        for (const pattern of answerPatterns) {
+            const matches = [...html.matchAll(pattern)];
+            if (matches.length >= 4) {
+                console.log(`Found ${matches.length} groups with pattern`);
+                
+                for (let i = 0; i < Math.min(4, matches.length); i++) {
+                    const wordsText = matches[i][1];
+                    const words = extractWordsFromText(wordsText);
+                    
+                    if (words.length >= 4) {
+                        groups.push({
+                            theme: `Group ${groups.length + 1}`,
+                            words: words.slice(0, 4),
+                            difficulty: ['green', 'yellow', 'blue', 'purple'][groups.length],
+                            hint: `These words share a common theme`
+                        });
+                    }
+                }
+                
+                if (groups.length === 4) break;
+            }
+        }
+        
+        // 策略2: 查找列表格式
+        if (groups.length < 4) {
+            const listPattern = /<li[^>]*>(.*?)<\/li>/gi;
+            const listItems = [...html.matchAll(listPattern)];
+            
+            if (listItems.length >= 16) {
+                console.log(`Found ${listItems.length} list items`);
+                
+                for (let i = 0; i < 4; i++) {
+                    const groupWords = [];
+                    for (let j = 0; j < 4; j++) {
+                        const itemIndex = i * 4 + j;
+                        if (itemIndex < listItems.length) {
+                            const word = extractWordsFromText(listItems[itemIndex][1])[0];
+                            if (word) groupWords.push(word);
+                        }
+                    }
+                    
+                    if (groupWords.length === 4) {
+                        groups.push({
+                            theme: `Group ${groups.length + 1}`,
+                            words: groupWords,
+                            difficulty: ['green', 'yellow', 'blue', 'purple'][groups.length],
+                            hint: `These words share a common theme`
+                        });
+                    }
+                }
+            }
+        }
+        
+        // 策略3: 查找所有大写单词
+        if (groups.length < 4) {
+            const allWords = extractWordsFromText(html);
+            if (allWords.length >= 16) {
+                console.log(`Found ${allWords.length} potential words`);
+                
+                // 取前16个单词，分成4组
+                for (let i = 0; i < 4; i++) {
+                    const groupWords = allWords.slice(i * 4, (i + 1) * 4);
+                    if (groupWords.length === 4) {
+                        groups.push({
+                            theme: `Group ${groups.length + 1}`,
+                            words: groupWords,
+                            difficulty: ['green', 'yellow', 'blue', 'purple'][groups.length],
+                            hint: `These words share a common theme`
+                        });
+                    }
+                }
+            }
+        }
+        
+        if (groups.length === 4) {
+            console.log('Successfully parsed 4 groups from Mashable');
+            return {
+                date: dateStr,
+                words: groups.flatMap(g => g.words),
+                groups: groups,
+                source: 'Mashable'
+            };
+        }
+        
+        console.log(`Only found ${groups.length} groups, need 4`);
+        return null;
+        
+    } catch (error) {
+        console.error('Mashable HTML parsing error:', error);
+        return null;
+    }
+}
+
+// 从文本中提取单词
+function extractWordsFromText(text) {
+    if (!text) return [];
+    
+    // 移除HTML标签
+    const cleanText = text.replace(/<[^>]*>/g, ' ');
+    
+    // 查找大写单词（可能包含空格和连字符）
+    const wordPatterns = [
+        /\b[A-Z][A-Z\s\-']+\b/g,  // 全大写单词
+        /\b[A-Z][a-z]+\b/g,       // 首字母大写
+        /\b[A-Z]+\b/g             // 纯大写
+    ];
+    
+    const allWords = [];
+    
+    for (const pattern of wordPatterns) {
+        const matches = cleanText.match(pattern) || [];
+        allWords.push(...matches);
+    }
+    
+    // 清理和去重
+    const cleanWords = allWords
+        .map(word => word.trim().toUpperCase())
+        .filter(word => word.length >= 2 && word.length <= 15)
+        .filter((word, index, arr) => arr.indexOf(word) === index);
+    
+    return cleanWords;
+}
+
+async function fetchFromNYT() {
+    // NYT官方API通常需要更复杂的处理
     return null;
 }
 
