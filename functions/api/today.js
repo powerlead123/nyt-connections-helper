@@ -70,20 +70,12 @@ async function fetchTodaysPuzzle() {
     }
 }
 
-// 从多个数据源获取数据
+// 从Mashable获取数据
 async function fetchFromMashable() {
     try {
-        // 尝试从NYT官方API获取（如果可用）
-        const nytData = await fetchFromNYT();
-        if (nytData) return nytData;
-        
-        // 尝试从Mashable获取
+        // 直接从Mashable获取
         const mashableData = await fetchFromMashableSource();
         if (mashableData) return mashableData;
-        
-        // 尝试从本地文章文件获取
-        const localData = await fetchFromLocalArticles();
-        if (localData) return localData;
         
         return null;
         
@@ -93,61 +85,7 @@ async function fetchFromMashable() {
     }
 }
 
-// 尝试从NYT官方获取数据
-async function fetchFromNYT() {
-    try {
-        // NYT Connections 游戏页面
-        const response = await fetch('https://www.nytimes.com/games/connections', {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        });
-        
-        if (!response.ok) return null;
-        
-        const html = await response.text();
-        
-        // 查找游戏数据
-        const gameDataMatch = html.match(/window\.gameData\s*=\s*({.*?});/s);
-        if (gameDataMatch) {
-            const gameData = JSON.parse(gameDataMatch[1]);
-            if (gameData && gameData.today) {
-                return parseNYTGameData(gameData.today);
-            }
-        }
-        
-        return null;
-    } catch (error) {
-        console.error('NYT fetch error:', error);
-        return null;
-    }
-}
 
-// 解析NYT游戏数据
-function parseNYTGameData(todayData) {
-    try {
-        if (!todayData.groups || !todayData.startingGroups) return null;
-        
-        const groups = todayData.groups.map((group, index) => ({
-            theme: group.theme || `Group ${index + 1}`,
-            words: group.members || [],
-            difficulty: ['green', 'yellow', 'blue', 'purple'][group.level] || 'green',
-            hint: `These words are all related to "${group.theme}"`
-        }));
-        
-        const words = groups.flatMap(g => g.words);
-        
-        return {
-            date: new Date().toISOString().split('T')[0],
-            words: words,
-            groups: groups,
-            source: 'NYT Official'
-        };
-    } catch (error) {
-        console.error('NYT data parsing error:', error);
-        return null;
-    }
-}
 
 // 从Mashable获取数据
 async function fetchFromMashableSource() {
@@ -214,6 +152,16 @@ async function fetchFromMashableSource() {
                 
                 console.log('Debug info:', JSON.stringify(debugInfo, null, 2));
                 
+                // 如果包含关键词但解析失败，保存HTML片段用于调试
+                if (debugInfo.hasConnections && debugInfo.hasAnswer) {
+                    console.log('HTML contains connections keywords but parsing failed');
+                    console.log('HTML sample:', html.substring(0, 2000));
+                    
+                    // 尝试简单的文本提取
+                    const simpleWords = html.match(/\b[A-Z]{3,}\b/g) || [];
+                    console.log('Found uppercase words:', simpleWords.slice(0, 20));
+                }
+                
                 // 解析数据
                 const puzzleData = parseMashableHTML(html, dateStr);
                 if (puzzleData) {
@@ -245,8 +193,31 @@ function parseMashableHTML(html, dateStr) {
         
         // 多种解析策略
         
-        // 策略1: 查找标准答案格式 - 更宽松的模式
+        // 策略1: 查找标准答案格式 - 更强大的解析
         console.log('Starting pattern matching...');
+        console.log('HTML preview:', html.substring(0, 500));
+        
+        // 首先尝试查找今天的日期，确保我们在正确的文章中
+        const datePatterns = [
+            /august\s+29/gi,
+            /29.*august/gi,
+            /8[\/\-]29/gi,
+            /29[\/\-]8/gi
+        ];
+        
+        let hasDateMatch = false;
+        for (const pattern of datePatterns) {
+            if (pattern.test(html)) {
+                hasDateMatch = true;
+                console.log('Found date match with pattern:', pattern);
+                break;
+            }
+        }
+        
+        if (!hasDateMatch) {
+            console.log('Warning: No date match found in HTML');
+        }
+        
         const answerPatterns = [
             // 基本颜色模式（大小写不敏感）
             /(?:green|yellow|blue|purple)[\s\S]*?:([\s\S]*?)(?=(?:green|yellow|blue|purple)|$)/gi,
@@ -257,8 +228,12 @@ function parseMashableHTML(html, dateStr) {
             /<strong[^>]*>(?:Green|Yellow|Blue|Purple)[^<]*<\/strong>([\s\S]*?)(?=<strong[^>]*>(?:Green|Yellow|Blue|Purple)|$)/gi,
             // 查找"答案"或"solution"后的内容
             /(?:answer|solution)[\s\S]*?:([\s\S]*?)(?=(?:answer|solution|green|yellow|blue|purple)|$)/gi,
+            // 查找"connections"后的答案区域
+            /connections[\s\S]*?answer[\s\S]*?:([\s\S]*?)(?=(?:green|yellow|blue|purple)|$)/gi,
             // 更宽松的匹配 - 查找连续的大写单词组
-            /([A-Z]{3,}[\s,]*[A-Z]{3,}[\s,]*[A-Z]{3,}[\s,]*[A-Z]{3,})/g
+            /([A-Z]{3,}[\s,]*[A-Z]{3,}[\s,]*[A-Z]{3,}[\s,]*[A-Z]{3,})/g,
+            // 查找列表格式的答案
+            /<li[^>]*>([^<]*(?:GREEN|YELLOW|BLUE|PURPLE)[^<]*)<\/li>/gi
         ];
         
         for (const pattern of answerPatterns) {
@@ -346,6 +321,16 @@ function parseMashableHTML(html, dateStr) {
         }
         
         console.log(`Only found ${groups.length} groups, need 4`);
+        
+        // 如果解析失败但HTML包含关键词，尝试手动提取
+        if (html.toLowerCase().includes('connections') && html.toLowerCase().includes('answer')) {
+            console.log('Attempting manual extraction from Mashable HTML...');
+            const manualResult = attemptManualExtraction(html, dateStr);
+            if (manualResult) {
+                return manualResult;
+            }
+        }
+        
         return null;
         
     } catch (error) {
@@ -402,6 +387,70 @@ function extractWordsFromText(text) {
     
     console.log('Extracted words:', cleanWords.slice(0, 10));
     return cleanWords;
+}
+
+// 尝试手动从Mashable HTML中提取数据
+function attemptManualExtraction(html, dateStr) {
+    try {
+        console.log('Attempting manual extraction...');
+        
+        // 查找可能包含答案的文本块
+        const textBlocks = [
+            // 查找包含"green"、"yellow"等的段落
+            ...html.match(/<p[^>]*>[\s\S]*?(?:green|yellow|blue|purple)[\s\S]*?<\/p>/gi) || [],
+            // 查找包含答案的div
+            ...html.match(/<div[^>]*>[\s\S]*?(?:answer|solution)[\s\S]*?<\/div>/gi) || [],
+            // 查找列表
+            ...html.match(/<ul[^>]*>[\s\S]*?<\/ul>/gi) || [],
+            ...html.match(/<ol[^>]*>[\s\S]*?<\/ol>/gi) || []
+        ];
+        
+        console.log(`Found ${textBlocks.length} potential text blocks`);
+        
+        const allWords = [];
+        for (const block of textBlocks) {
+            const words = extractWordsFromText(block);
+            allWords.push(...words);
+        }
+        
+        // 去重并过滤
+        const uniqueWords = [...new Set(allWords)]
+            .filter(word => word.length >= 3 && word.length <= 12)
+            .slice(0, 20); // 取前20个作为候选
+        
+        console.log('Extracted candidate words:', uniqueWords);
+        
+        if (uniqueWords.length >= 16) {
+            // 创建4个组，每组4个单词
+            const groups = [];
+            for (let i = 0; i < 4; i++) {
+                const groupWords = uniqueWords.slice(i * 4, (i + 1) * 4);
+                if (groupWords.length === 4) {
+                    groups.push({
+                        theme: `Group ${i + 1}`,
+                        words: groupWords,
+                        difficulty: ['green', 'yellow', 'blue', 'purple'][i],
+                        hint: `These words share a common theme`
+                    });
+                }
+            }
+            
+            if (groups.length === 4) {
+                console.log('Manual extraction successful!');
+                return {
+                    date: dateStr,
+                    words: groups.flatMap(g => g.words),
+                    groups: groups,
+                    source: 'Mashable (Manual)'
+                };
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Manual extraction failed:', error);
+        return null;
+    }
 }
 
 // 从本地文章文件获取数据
