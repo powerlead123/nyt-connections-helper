@@ -2,9 +2,8 @@ name: Daily NYT Connections Update
 
 on:
   schedule:
-    # 每天早上6点UTC (北京时间下午2点) 运行
     - cron: '0 6 * * *'
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   update-puzzle:
@@ -19,4 +18,3 @@ jobs:
             "action": "daily-update",
             "secret": "${{ secrets.CRON_SECRET }}"
           }'
-# Auto-update daily puzzle data
