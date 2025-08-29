@@ -12,7 +12,9 @@ jobs:
     
     steps:
     - name: Trigger Daily Update
+      env:
+        CRON_SECRET: ${{ secrets.CRON_SECRET }}
       run: |
         curl -X POST "https://nyt-connections-helper.pages.dev/scheduled" \
           -H "Content-Type: application/json" \
-          -d "{\"action\": \"daily-update\", \"secret\": \"${{ secrets.CRON_SECRET }}\"}"
+          -d '{"action": "daily-update", "secret": "'$CRON_SECRET'"}'
