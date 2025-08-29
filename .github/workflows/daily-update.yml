@@ -15,7 +15,4 @@ jobs:
       run: |
         curl -X POST "https://nyt-connections-helper.pages.dev/scheduled" \
           -H "Content-Type: application/json" \
-          -d '{
-            "action": "daily-update",
-            "secret": "${{ secrets.CRON_SECRET }}"
-          }'
+          -d "{\"action\": \"daily-update\", \"secret\": \"${{ secrets.CRON_SECRET }}\"}"
