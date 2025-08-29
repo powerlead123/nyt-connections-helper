@@ -1,4 +1,5 @@
 name: Daily NYT Connections Update
+# Updated with proper secret configuration
 
 on:
   schedule:
