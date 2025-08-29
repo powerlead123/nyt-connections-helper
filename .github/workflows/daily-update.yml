@@ -17,4 +17,5 @@ jobs:
           -d '{
             "action": "daily-update",
             "secret": "${{ secrets.CRON_SECRET }}"
-          }'
+          }'#
+ Trigger new workflow run
