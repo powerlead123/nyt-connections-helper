@@ -193,11 +193,34 @@ async function fetchFromMashableSource() {
                 const html = await response.text();
                 console.log(`Successfully fetched HTML, length: ${html.length}`);
                 
+                // 添加调试信息
+                const debugInfo = {
+                    hasConnections: html.toLowerCase().includes('connections'),
+                    hasAnswer: html.toLowerCase().includes('answer'),
+                    hasGreen: html.toLowerCase().includes('green'),
+                    hasYellow: html.toLowerCase().includes('yellow'),
+                    hasBlue: html.toLowerCase().includes('blue'),
+                    hasPurple: html.toLowerCase().includes('purple'),
+                    colorMatches: {
+                        green: (html.match(/green[\\s\\S]{0,200}/gi) || []).length,
+                        yellow: (html.match(/yellow[\\s\\S]{0,200}/gi) || []).length,
+                        blue: (html.match(/blue[\\s\\S]{0,200}/gi) || []).length,
+                        purple: (html.match(/purple[\\s\\S]{0,200}/gi) || []).length
+                    },
+                    listItems: (html.match(/<li[^>]*>/gi) || []).length,
+                    strongTags: (html.match(/<strong[^>]*>/gi) || []).length,
+                    uppercaseWords: (html.match(/\\b[A-Z]{2,}\\b/g) || []).slice(0, 20)
+                };
+                
+                console.log('Debug info:', JSON.stringify(debugInfo, null, 2));
+                
                 // 解析数据
                 const puzzleData = parseMashableHTML(html, dateStr);
                 if (puzzleData) {
                     console.log('Successfully parsed Mashable data');
                     return puzzleData;
+                } else {
+                    console.log('Failed to parse Mashable data');
                 }
                 
             } catch (error) {
