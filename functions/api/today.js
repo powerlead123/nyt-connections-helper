@@ -245,11 +245,20 @@ function parseMashableHTML(html, dateStr) {
         
         // 多种解析策略
         
-        // 策略1: 查找标准答案格式
+        // 策略1: 查找标准答案格式 - 更宽松的模式
+        console.log('Starting pattern matching...');
         const answerPatterns = [
+            // 基本颜色模式（大小写不敏感）
+            /(?:green|yellow|blue|purple)[\s\S]*?:([\s\S]*?)(?=(?:green|yellow|blue|purple)|$)/gi,
             /(?:Green|Yellow|Blue|Purple)[\s\S]*?:([\s\S]*?)(?=(?:Green|Yellow|Blue|Purple)|$)/gi,
+            // 表情符号模式
             /(?:🟢|🟡|🔵|🟣)[\s\S]*?:([\s\S]*?)(?=(?:🟢|🟡|🔵|🟣)|$)/gi,
-            /<strong[^>]*>(?:Green|Yellow|Blue|Purple)[^<]*<\/strong>([\s\S]*?)(?=<strong[^>]*>(?:Green|Yellow|Blue|Purple)|$)/gi
+            // HTML标签模式
+            /<strong[^>]*>(?:Green|Yellow|Blue|Purple)[^<]*<\/strong>([\s\S]*?)(?=<strong[^>]*>(?:Green|Yellow|Blue|Purple)|$)/gi,
+            // 查找"答案"或"solution"后的内容
+            /(?:answer|solution)[\s\S]*?:([\s\S]*?)(?=(?:answer|solution|green|yellow|blue|purple)|$)/gi,
+            // 更宽松的匹配 - 查找连续的大写单词组
+            /([A-Z]{3,}[\s,]*[A-Z]{3,}[\s,]*[A-Z]{3,}[\s,]*[A-Z]{3,})/g
         ];
         
         for (const pattern of answerPatterns) {
@@ -349,29 +358,49 @@ function parseMashableHTML(html, dateStr) {
 function extractWordsFromText(text) {
     if (!text) return [];
     
+    console.log('Extracting words from text:', text.substring(0, 200));
+    
     // 移除HTML标签
     const cleanText = text.replace(/<[^>]*>/g, ' ');
     
-    // 查找大写单词（可能包含空格和连字符）
-    const wordPatterns = [
-        /\b[A-Z][A-Z\s\-']+\b/g,  // 全大写单词
-        /\b[A-Z][a-z]+\b/g,       // 首字母大写
-        /\b[A-Z]+\b/g             // 纯大写
-    ];
-    
+    // 多种单词提取策略
     const allWords = [];
     
-    for (const pattern of wordPatterns) {
-        const matches = cleanText.match(pattern) || [];
-        allWords.push(...matches);
-    }
+    // 策略1: 查找大写单词
+    const uppercaseWords = cleanText.match(/\b[A-Z]{2,}\b/g) || [];
+    allWords.push(...uppercaseWords);
+    
+    // 策略2: 查找首字母大写的单词
+    const capitalizedWords = cleanText.match(/\b[A-Z][a-z]+\b/g) || [];
+    allWords.push(...capitalizedWords);
+    
+    // 策略3: 查找引号中的单词
+    const quotedWords = cleanText.match(/"([^"]+)"/g) || [];
+    quotedWords.forEach(quoted => {
+        const word = quoted.replace(/"/g, '').trim();
+        if (word.length >= 2) allWords.push(word);
+    });
+    
+    // 策略4: 查找列表项中的单词
+    const listWords = cleanText.match(/(?:^|\n)\s*[-•*]\s*([A-Za-z\s]+)/gm) || [];
+    listWords.forEach(item => {
+        const word = item.replace(/^[\s\n-•*]+/, '').trim();
+        if (word.length >= 2) allWords.push(word);
+    });
+    
+    // 策略5: 查找逗号分隔的单词
+    const commaWords = cleanText.split(/[,;]/).map(w => w.trim()).filter(w => w.length >= 2 && w.length <= 15);
+    allWords.push(...commaWords);
     
     // 清理和去重
     const cleanWords = allWords
         .map(word => word.trim().toUpperCase())
         .filter(word => word.length >= 2 && word.length <= 15)
+        .filter(word => /^[A-Z\s\-']+$/.test(word)) // 只保留字母、空格、连字符和撇号
+        .filter(word => !/^(THE|AND|OR|OF|TO|IN|FOR|WITH|ON|AT|BY|FROM|A|AN|IS|ARE|WAS|WERE)$/.test(word))
         .filter((word, index, arr) => arr.indexOf(word) === index);
     
+    console.log('Extracted words:', cleanWords.slice(0, 10));
     return cleanWords;
 }
 
