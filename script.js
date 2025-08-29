@@ -70,6 +70,7 @@ async function loadTodaysPuzzle() {
 
 // Update puzzle date display
 function updatePuzzleDateDisplay() {
+    console.log('Updating puzzle date display...');
     const puzzleDateElement = document.getElementById('puzzleDate');
     const puzzleStatusElement = document.getElementById('puzzleStatus');
     const puzzleInfoElement = document.getElementById('puzzleInfo');
@@ -77,6 +78,9 @@ function updatePuzzleDateDisplay() {
     if (todaysPuzzle && todaysPuzzle.date) {
         const puzzleDate = new Date(todaysPuzzle.date);
         const today = new Date();
+        
+        console.log('Puzzle date:', puzzleDate.toDateString());
+        console.log('Today date:', today.toDateString());
         
         // Format the date nicely
         const formattedDate = puzzleDate.toLocaleDateString('en-US', {
@@ -86,11 +90,15 @@ function updatePuzzleDateDisplay() {
             day: 'numeric'
         });
         
+        console.log('Formatted date:', formattedDate);
         puzzleDateElement.textContent = formattedDate;
         
         // Check if it's today's puzzle
         const isToday = puzzleDate.toDateString() === today.toDateString();
         const isYesterday = puzzleDate.toDateString() === new Date(today.getTime() - 24*60*60*1000).toDateString();
+        
+        console.log('Is today:', isToday);
+        console.log('Is yesterday:', isYesterday);
         
         if (isToday) {
             puzzleStatusElement.textContent = '✅';
@@ -164,7 +172,13 @@ async function refreshPuzzleData() {
 
 // 初始化游戏状态
 function initializeGame() {
-    if (!todaysPuzzle || !todaysPuzzle.words) return;
+    console.log('Initializing game...');
+    if (!todaysPuzzle || !todaysPuzzle.words) {
+        console.error('No puzzle data available for game initialization');
+        return;
+    }
+    
+    console.log('Available words:', todaysPuzzle.words);
     
     gameState = {
         selectedWords: [],
@@ -174,6 +188,7 @@ function initializeGame() {
         availableWords: [...todaysPuzzle.words].sort(() => Math.random() - 0.5)
     };
     
+    console.log('Game state initialized:', gameState);
     updateGameStatus();
 }
 
