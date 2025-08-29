@@ -52,13 +52,17 @@ function showLoadingMessage() {
 
 // Load today's puzzle from server
 async function loadTodaysPuzzle() {
-    const response = await fetch('/api/today');
+    console.log('Loading puzzle from API...');
+    const response = await fetch('/api/today?t=' + Date.now()); // 添加时间戳防止缓存
     if (!response.ok) {
         throw new Error('Unable to fetch puzzle data');
     }
     
     todaysPuzzle = await response.json();
     console.log('Today\'s puzzle loaded successfully:', todaysPuzzle);
+    console.log('Puzzle date:', todaysPuzzle.date);
+    console.log('Puzzle source:', todaysPuzzle.source);
+    console.log('First few words:', todaysPuzzle.words?.slice(0, 4));
     
     // Update puzzle date display
     updatePuzzleDateDisplay();
