@@ -1,4 +1,5 @@
 name: Daily NYT Connections Update
+# Manual trigger test
 
 on:
   schedule:
