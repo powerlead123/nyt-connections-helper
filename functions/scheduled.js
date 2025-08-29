@@ -230,46 +230,77 @@ async function fetchFromMashable() {
             `https://mashable.com/article/connections-hint-answer-today-${month}-${day}-${year}`
         ];
         
-        for (const url of urls) {
-            try {
-                console.log(`Trying URL: ${url}`);
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.5',
-                        'Accept-Encoding': 'gzip, deflate, br',
-                        'DNT': '1',
-                        'Connection': 'keep-alive',
-                        'Upgrade-Insecure-Requests': '1',
-                        'Sec-Fetch-Dest': 'document',
-                        'Sec-Fetch-Mode': 'navigate',
-                        'Sec-Fetch-Site': 'none',
-                        'Cache-Control': 'max-age=0'
-                    },
-                    signal: AbortSignal.timeout(10000) // 10秒超时
-                });
-                
-                if (!response.ok) {
-                    console.log(`URL failed with status: ${response.status}`);
+        // 尝试使用代理服务
+        const proxyServices = [
+            // 使用allorigins代理
+            (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+            // 使用cors-anywhere代理
+            (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+            // 直接访问
+            (url) => url
+        ];
+
+        for (const baseUrl of urls) {
+            for (const proxyFn of proxyServices) {
+                try {
+                    const url = proxyFn(baseUrl);
+                    console.log(`Trying URL: ${url}`);
+                    
+                    let response;
+                    let html;
+                    
+                    if (url.includes('allorigins.win')) {
+                        // allorigins返回JSON格式
+                        response = await fetch(url, {
+                            method: 'GET',
+                            signal: AbortSignal.timeout(15000)
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            html = data.contents;
+                        }
+                    } else {
+                        // 直接请求或cors-anywhere
+                        const headers = {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.5'
+                        };
+                        
+                        if (url.includes('cors-anywhere')) {
+                            headers['X-Requested-With'] = 'XMLHttpRequest';
+                        }
+                        
+                        response = await fetch(url, {
+                            method: 'GET',
+                            headers: headers,
+                            signal: AbortSignal.timeout(15000)
+                        });
+                        
+                        if (response.ok) {
+                            html = await response.text();
+                        }
+                    }
+                    
+                    if (!html) {
+                        console.log(`No HTML content from ${url}`);
+                        continue;
+                    }
+                    
+                    console.log(`Successfully fetched HTML, length: ${html.length}`);
+                    
+                    // 解析数据
+                    const puzzleData = parseMashableHTML(html, dateStr);
+                    if (puzzleData) {
+                        console.log('Successfully parsed Mashable data');
+                        return puzzleData;
+                    }
+                    
+                } catch (error) {
+                    console.log(`URL ${proxyFn(baseUrl)} failed:`, error.message);
                     continue;
                 }
-                
-                const html = await response.text();
-                console.log(`Successfully fetched HTML, length: ${html.length}`);
-                
-                // 解析数据
-                const puzzleData = parseMashableHTML(html, dateStr);
-                if (puzzleData) {
-                    console.log('Successfully parsed Mashable data');
-                    return puzzleData;
-                }
-                
-            } catch (error) {
-                console.log(`URL ${url} failed:`, error.message);
-                continue;
             }
         }
         
