@@ -1,10 +1,14 @@
 name: Daily NYT Connections Update
-# Manual trigger test
 
 on:
   schedule:
     - cron: '0 6 * * *'
   workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update today data'
+        required: false
+        default: 'true'
 
 jobs:
   update-puzzle:

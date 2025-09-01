@@ -592,39 +592,40 @@ function parseLocalArticle(articleText, date) {
     }
 }
 
-// 备用谜题数据 - 使用今天的真实数据
+// 备用谜题数据 - 临时使用，等待真实数据更新
 function getBackupPuzzle() {
     const today = new Date().toISOString().split('T')[0];
     
+    // 临时数据 - 需要替换为真实的9月1日数据
     return {
         date: today,
-        words: ['NET', 'SNARE', 'TANGLE', 'WEB', 'CUP', 'KETTLE', 'TEABAG', 'WATER', 'DIAMOND', 'NAILS', 'ROCK', 'STEEL', 'CANTAB', 'CYBERSPACE', 'ICECAPS', 'MAKESHIFT'],
+        words: ['APPLE', 'BANANA', 'CHERRY', 'DATE', 'EAGLE', 'FALCON', 'HAWK', 'OWL', 'PIANO', 'GUITAR', 'VIOLIN', 'DRUMS', 'HAPPY', 'JOYFUL', 'GLAD', 'CHEERFUL'],
         groups: [
             {
-                theme: 'Places to get trapped',
-                words: ['NET', 'SNARE', 'TANGLE', 'WEB'],
+                theme: 'Fruits',
+                words: ['APPLE', 'BANANA', 'CHERRY', 'DATE'],
                 difficulty: 'green',
-                hint: 'Think about things that can catch or ensnare something'
+                hint: 'Sweet things you can eat'
             },
             {
-                theme: 'Used for tea',
-                words: ['CUP', 'KETTLE', 'TEABAG', 'WATER'],
+                theme: 'Birds of prey',
+                words: ['EAGLE', 'FALCON', 'HAWK', 'OWL'],
                 difficulty: 'yellow',
-                hint: 'Essential items for making and serving tea'
+                hint: 'Hunting birds'
             },
             {
-                theme: 'Associated with hardness',
-                words: ['DIAMOND', 'NAILS', 'ROCK', 'STEEL'],
+                theme: 'Musical instruments',
+                words: ['PIANO', 'GUITAR', 'VIOLIN', 'DRUMS'],
                 difficulty: 'blue',
-                hint: 'All of these things are known for being very hard or tough'
+                hint: 'Things you play music with'
             },
             {
-                theme: 'Ending with keyboard keys',
-                words: ['CANTAB', 'CYBERSPACE', 'ICECAPS', 'MAKESHIFT'],
+                theme: 'Synonyms for happy',
+                words: ['HAPPY', 'JOYFUL', 'GLAD', 'CHEERFUL'],
                 difficulty: 'purple',
-                hint: 'Look at the last few letters of each word - they spell out keys on your keyboard'
+                hint: 'Words that mean feeling good'
             }
         ],
-        source: 'Today\'s Puzzle'
+        source: 'Temporary Data - Awaiting Real Update'
     };
 }
