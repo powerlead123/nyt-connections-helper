@@ -21,8 +21,9 @@ export async function onRequest(context) {
             });
         }
         
-        // 如果没有缓存，获取新数据
-        const puzzleData = await fetchTodaysPuzzle();
+        // 如果没有缓存，尝试实时获取新数据
+        console.log('Attempting real-time fetch...');
+        const puzzleData = await fetchTodaysPuzzleRealTime();
         
         // 存储到KV
         if (env.CONNECTIONS_KV && puzzleData) {
@@ -66,6 +67,27 @@ async function fetchTodaysPuzzle() {
         
     } catch (error) {
         console.error('Fetch error:', error);
+        return getBackupPuzzle();
+    }
+}
+
+// 实时获取今日谜题数据
+async function fetchTodaysPuzzleRealTime() {
+    try {
+        console.log('Real-time fetch starting...');
+        
+        // 直接尝试从Mashable获取
+        const mashableData = await fetchFromMashableRealTime();
+        if (mashableData && mashableData.groups && mashableData.groups.length === 4) {
+            console.log('Real-time fetch successful!');
+            return mashableData;
+        }
+        
+        console.log('Real-time fetch failed, using backup');
+        return getBackupPuzzle();
+        
+    } catch (error) {
+        console.error('Real-time fetch error:', error);
         return getBackupPuzzle();
     }
 }
@@ -191,6 +213,186 @@ async function fetchFromMashableSource() {
         console.error('Mashable fetch error:', error);
         return null;
     }
+}
+
+// 实时从Mashable获取数据
+async function fetchFromMashableRealTime() {
+    try {
+        const today = new Date();
+        const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                           'july', 'august', 'september', 'october', 'november', 'december'];
+        const monthName = monthNames[today.getMonth()];
+        const day = today.getDate();
+        const year = today.getFullYear();
+        const dateStr = today.toISOString().split('T')[0];
+        
+        console.log(`Real-time fetch for: ${monthName} ${day}, ${year}`);
+        
+        const urls = [
+            `https://mashable.com/article/nyt-connections-hint-answer-today-${monthName}-${day}-${year}`,
+            `https://mashable.com/article/nyt-connections-answer-today-${monthName}-${day}-${year}`
+        ];
+        
+        for (const baseUrl of urls) {
+            try {
+                console.log(`Trying real-time URL: ${baseUrl}`);
+                
+                // 使用allorigins代理
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(baseUrl)}`;
+                
+                const response = await fetch(proxyUrl, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(15000)
+                });
+                
+                if (!response.ok) {
+                    console.log(`Proxy failed: ${response.status}`);
+                    continue;
+                }
+                
+                const data = await response.json();
+                const html = data.contents;
+                
+                if (!html || html.length < 1000) {
+                    console.log(`HTML too short: ${html?.length || 0}`);
+                    continue;
+                }
+                
+                console.log(`HTML fetched: ${html.length} chars`);
+                
+                // 使用改进的解析
+                const result = parseRealTime(html, dateStr);
+                if (result) {
+                    console.log('Real-time parsing successful!');
+                    return result;
+                }
+                
+            } catch (error) {
+                console.log(`Real-time URL failed: ${error.message}`);
+                continue;
+            }
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('Real-time Mashable error:', error);
+        return null;
+    }
+}
+
+// 实时解析函数
+function parseRealTime(html, dateStr) {
+    try {
+        console.log('Starting real-time parsing...');
+        
+        // 查找颜色提示
+        const colorPattern = /(Yellow|Green|Blue|Purple):\s*<strong>([^<]+)<\/strong>/gi;
+        const colorMatches = [...html.matchAll(colorPattern)];
+        
+        console.log(`Found ${colorMatches.length} color matches`);
+        
+        if (colorMatches.length >= 4) {
+            const hints = {};
+            colorMatches.forEach(match => {
+                hints[match[1]] = match[2].trim();
+            });
+            
+            console.log('Color hints:', hints);
+            
+            // 提取所有可能的答案单词
+            const allWords = extractRealTimeWords(html);
+            console.log(`Extracted ${allWords.length} words:`, allWords.slice(0, 16));
+            
+            if (allWords.length >= 16) {
+                const groups = [
+                    {
+                        theme: hints.Yellow || 'Yellow Group',
+                        words: allWords.slice(0, 4),
+                        difficulty: 'yellow',
+                        hint: hints.Yellow || 'These words share a theme'
+                    },
+                    {
+                        theme: hints.Green || 'Green Group', 
+                        words: allWords.slice(4, 8),
+                        difficulty: 'green',
+                        hint: hints.Green || 'These words share a theme'
+                    },
+                    {
+                        theme: hints.Blue || 'Blue Group',
+                        words: allWords.slice(8, 12),
+                        difficulty: 'blue',
+                        hint: hints.Blue || 'These words share a theme'
+                    },
+                    {
+                        theme: hints.Purple || 'Purple Group',
+                        words: allWords.slice(12, 16),
+                        difficulty: 'purple',
+                        hint: hints.Purple || 'These words share a theme'
+                    }
+                ];
+                
+                return {
+                    date: dateStr,
+                    words: groups.flatMap(g => g.words),
+                    groups: groups,
+                    source: 'Mashable (Real-time)'
+                };
+            }
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('Real-time parsing error:', error);
+        return null;
+    }
+}
+
+// 实时单词提取
+function extractRealTimeWords(html) {
+    // 查找答案相关的区域
+    const answerSections = [
+        ...html.match(/<p[^>]*>[\s\S]*?answer[\s\S]*?<\/p>/gi) || [],
+        ...html.match(/<div[^>]*>[\s\S]*?(?:answer|solution)[\s\S]*?<\/div>/gi) || [],
+        ...html.match(/<ul[^>]*>[\s\S]*?<\/ul>/gi) || []
+    ];
+    
+    const allWords = new Set();
+    
+    // 从答案区域提取
+    for (const section of answerSections) {
+        const cleanText = section.replace(/<[^>]*>/g, ' ');
+        const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
+        words.forEach(word => allWords.add(word));
+    }
+    
+    // 如果不够，从整个HTML提取
+    if (allWords.size < 16) {
+        const cleanHtml = html.replace(/<[^>]*>/g, ' ');
+        const words = cleanHtml.match(/\b[A-Z]{3,12}\b/g) || [];
+        words.forEach(word => allWords.add(word));
+    }
+    
+    const wordArray = Array.from(allWords);
+    
+    // 过滤掉网站相关词汇
+    const filtered = wordArray.filter(word => {
+        const exclude = [
+            'MASHABLE', 'CONNECTIONS', 'NYT', 'PUZZLE', 'ANSWER', 'HINT',
+            'TODAY', 'DAILY', 'GAME', 'WORDLE', 'ARTICLE', 'CONTENT',
+            'HTML', 'CSS', 'JAVASCRIPT', 'SEARCH', 'RESULT', 'NEWS',
+            'SOCIAL', 'MEDIA', 'TECH', 'SCIENCE', 'SUBSCRIBE', 'EMAIL',
+            'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+            'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+        ];
+        
+        return !exclude.includes(word) && 
+               word.length >= 3 && 
+               word.length <= 12;
+    });
+    
+    return filtered.slice(0, 20);
 }
 
 // 解析Mashable HTML内容
@@ -592,40 +794,40 @@ function parseLocalArticle(articleText, date) {
     }
 }
 
-// 备用谜题数据 - 临时使用，等待真实数据更新
+// 备用谜题数据 - 使用实时获取
 function getBackupPuzzle() {
     const today = new Date().toISOString().split('T')[0];
     
-    // 临时数据 - 需要替换为真实的9月1日数据
+    // 返回一个明显的占位符，这样用户知道需要更新
     return {
         date: today,
-        words: ['APPLE', 'BANANA', 'CHERRY', 'DATE', 'EAGLE', 'FALCON', 'HAWK', 'OWL', 'PIANO', 'GUITAR', 'VIOLIN', 'DRUMS', 'HAPPY', 'JOYFUL', 'GLAD', 'CHEERFUL'],
+        words: ['LOADING', 'PLEASE', 'WAIT', 'UPDATING', 'SYSTEM', 'WILL', 'FETCH', 'REAL', 'DATA', 'FROM', 'MASHABLE', 'SOON', 'CHECK', 'BACK', 'LATER', 'THANKS'],
         groups: [
             {
-                theme: 'Fruits',
-                words: ['APPLE', 'BANANA', 'CHERRY', 'DATE'],
+                theme: 'System Status',
+                words: ['LOADING', 'PLEASE', 'WAIT', 'UPDATING'],
                 difficulty: 'green',
-                hint: 'Sweet things you can eat'
+                hint: 'System is updating...'
             },
             {
-                theme: 'Birds of prey',
-                words: ['EAGLE', 'FALCON', 'HAWK', 'OWL'],
+                theme: 'Data Source',
+                words: ['SYSTEM', 'WILL', 'FETCH', 'REAL'],
                 difficulty: 'yellow',
-                hint: 'Hunting birds'
+                hint: 'Fetching from Mashable...'
             },
             {
-                theme: 'Musical instruments',
-                words: ['PIANO', 'GUITAR', 'VIOLIN', 'DRUMS'],
+                theme: 'Source Location',
+                words: ['DATA', 'FROM', 'MASHABLE', 'SOON'],
                 difficulty: 'blue',
-                hint: 'Things you play music with'
+                hint: 'Getting today\'s puzzle...'
             },
             {
-                theme: 'Synonyms for happy',
-                words: ['HAPPY', 'JOYFUL', 'GLAD', 'CHEERFUL'],
+                theme: 'User Message',
+                words: ['CHECK', 'BACK', 'LATER', 'THANKS'],
                 difficulty: 'purple',
-                hint: 'Words that mean feeling good'
+                hint: 'Please refresh in a few minutes'
             }
         ],
-        source: 'Temporary Data - Awaiting Real Update'
+        source: 'System Updating - Please Wait'
     };
 }

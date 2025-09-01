@@ -139,34 +139,59 @@ function showRefreshButton() {
 
 // Refresh puzzle data
 async function refreshPuzzleData() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const originalText = refreshBtn.innerHTML;
+    
+    // 显示加载状态
+    refreshBtn.innerHTML = '⏳ Refreshing...';
+    refreshBtn.disabled = true;
+    
     addUserMessage('Refresh data');
-    addAssistantMessage("Getting the latest data for you...");
+    addAssistantMessage("🔄 Manually refreshing puzzle data... This may take a moment while I fetch the latest data from Mashable.");
     
     try {
-        const response = await fetch('/api/refresh', { method: 'POST' });
+        const response = await fetch('/api/refresh', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
         const result = await response.json();
         
-        todaysPuzzle = result.data;
-        
-        // Reset game
-        initializeGame();
-        displayWords();
-        
-        // Update date display
-        updatePuzzleDateDisplay();
-        
-        // Clear completed groups
-        document.getElementById('completedGroups').innerHTML = '';
-        
-        addAssistantMessage("Data refreshed successfully! Game has been reset, start the new challenge!");
-        
-        // Remove refresh button
-        const refreshBtn = document.querySelector('button[onclick="refreshPuzzleData()"]');
-        if (refreshBtn) refreshBtn.remove();
+        if (result.success && result.data) {
+            // 更新puzzle数据
+            todaysPuzzle = result.data;
+            
+            // 重置游戏
+            initializeGame();
+            displayWords();
+            
+            // 更新日期显示
+            updatePuzzleDateDisplay();
+            
+            // 清除已完成的分组
+            document.getElementById('completedGroups').innerHTML = '';
+            
+            // 清除游戏消息
+            document.getElementById('gameMessage').textContent = '';
+            
+            addAssistantMessage(`✅ Success! Data refreshed from ${result.data.source}. The puzzle has been updated with fresh data and the game has been reset. Ready to play with the latest puzzle!`);
+            
+            console.log('Refresh successful:', result.data);
+            
+        } else {
+            addAssistantMessage(`⚠️ Refresh completed, but couldn't get fresh data: ${result.message}. You're still playing with the current puzzle data.`);
+            console.log('Refresh warning:', result.message);
+        }
         
     } catch (error) {
         console.error('Refresh failed:', error);
-        addAssistantMessage("Refresh failed, please try again later.");
+        addAssistantMessage("❌ Refresh failed due to a network error. Please check your connection and try again later.");
+    } finally {
+        // 恢复按钮状态
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
     }
 }
 
