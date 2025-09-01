@@ -41,17 +41,17 @@ export async function onRequest(context) {
             hasPurple: html.toLowerCase().includes('purple'),
             // 查找可能的答案模式
             colorPatterns: {
-                greenMatches: (html.match(/green[\\s\\S]{0,200}/gi) || []).length,
-                yellowMatches: (html.match(/yellow[\\s\\S]{0,200}/gi) || []).length,
-                blueMatches: (html.match(/blue[\\s\\S]{0,200}/gi) || []).length,
-                purpleMatches: (html.match(/purple[\\s\\S]{0,200}/gi) || []).length
+                greenMatches: (html.match(/green[\s\S]{0,200}/gi) || []).length,
+                yellowMatches: (html.match(/yellow[\s\S]{0,200}/gi) || []).length,
+                blueMatches: (html.match(/blue[\s\S]{0,200}/gi) || []).length,
+                purpleMatches: (html.match(/purple[\s\S]{0,200}/gi) || []).length
             },
             // 查找列表项
             listItems: (html.match(/<li[^>]*>/gi) || []).length,
             // 查找强调标签
             strongTags: (html.match(/<strong[^>]*>/gi) || []).length,
             // 查找大写单词
-            uppercaseWords: (html.match(/\\b[A-Z]{2,}\\b/g) || []).slice(0, 20)
+            uppercaseWords: (html.match(/\b[A-Z]{2,}\b/g) || []).slice(0, 20)
         };
         
         return new Response(JSON.stringify({
@@ -80,9 +80,9 @@ function parseMashableHTML(html, dateStr) {
         
         // 策略1: 查找标准答案格式
         const answerPatterns = [
-            /(?:Green|Yellow|Blue|Purple)[\\s\\S]*?:([\\s\\S]*?)(?=(?:Green|Yellow|Blue|Purple)|$)/gi,
-            /(?:🟢|🟡|🔵|🟣)[\\s\\S]*?:([\\s\\S]*?)(?=(?:🟢|🟡|🔵|🟣)|$)/gi,
-            /<strong[^>]*>(?:Green|Yellow|Blue|Purple)[^<]*<\\/strong>([\\s\\S]*?)(?=<strong[^>]*>(?:Green|Yellow|Blue|Purple)|$)/gi
+            /(?:Green|Yellow|Blue|Purple)[\s\S]*?:([\s\S]*?)(?=(?:Green|Yellow|Blue|Purple)|$)/gi,
+            /(?:🟢|🟡|🔵|🟣)[\s\S]*?:([\s\S]*?)(?=(?:🟢|🟡|🔵|🟣)|$)/gi,
+            /<strong[^>]*>(?:Green|Yellow|Blue|Purple)[^<]*<\/strong>([\s\S]*?)(?=<strong[^>]*>(?:Green|Yellow|Blue|Purple)|$)/gi
         ];
         
         for (const pattern of answerPatterns) {
@@ -110,7 +110,7 @@ function parseMashableHTML(html, dateStr) {
         
         // 策略2: 查找列表格式
         if (groups.length < 4) {
-            const listPattern = /<li[^>]*>(.*?)<\\/li>/gi;
+            const listPattern = /<li[^>]*>(.*?)<\/li>/gi;
             const listItems = [...html.matchAll(listPattern)];
             
             if (listItems.length >= 16) {
@@ -186,7 +186,7 @@ function extractWordsFromText(text) {
     const cleanText = text.replace(/<[^>]*>/g, ' ');
     
     // 查找大写单词（可能是答案）
-    const words = cleanText.match(/\\b[A-Z][A-Z\\s]{1,15}\\b/g) || [];
+    const words = cleanText.match(/\b[A-Z][A-Z\s]{1,15}\b/g) || [];
     
     return words
         .map(word => word.trim().toUpperCase())

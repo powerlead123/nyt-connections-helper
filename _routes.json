@@ -5,7 +5,8 @@
     "/scheduled",
     "/debug-scrape",
     "/test-proxy",
-    "/test-parse"
+    "/test-parse",
+    "/debug-mashable"
   ],
   "exclude": [
     "/static/*"
