@@ -154,8 +154,9 @@
                 <button class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors" onclick="restartGame()">
                     🔄 Restart Game
                 </button>
-                <button class="bg-cyan-500 text-white px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors" onclick="refreshPuzzleData()" id="refreshBtn">
-                    🔄 Refresh Data
+                <!-- Admin-only refresh button (hidden by default) -->
+                <button class="bg-cyan-500 text-white px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors hidden" onclick="refreshPuzzleData()" id="refreshBtn">
+                    🔄 Admin: Refresh Data
                 </button>
             </div>
         </div>

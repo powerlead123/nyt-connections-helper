@@ -17,6 +17,9 @@ let currentHintIndex = 0;
 async function initializePage() {
     showLoadingMessage();
     
+    // 检查管理员模式
+    checkAdminMode();
+    
     try {
         await loadTodaysPuzzle();
         initializeGame();
@@ -146,8 +149,8 @@ async function refreshPuzzleData() {
     refreshBtn.innerHTML = '⏳ Refreshing...';
     refreshBtn.disabled = true;
     
-    addUserMessage('Refresh data');
-    addAssistantMessage("🔄 Manually refreshing puzzle data... This may take a moment while I fetch the latest data from Mashable.");
+    addUserMessage('Admin: Refresh data');
+    addAssistantMessage("🔧 Admin: Manually refreshing puzzle data... This may take a moment while I fetch the latest data from Mashable.");
     
     try {
         const response = await fetch('/api/refresh', { 
@@ -159,7 +162,7 @@ async function refreshPuzzleData() {
         
         const result = await response.json();
         
-        if (result.success && result.data) {
+        if (result.success && result.data && result.data.groups && result.data.groups.length === 4) {
             // 更新puzzle数据
             todaysPuzzle = result.data;
             
@@ -181,8 +184,31 @@ async function refreshPuzzleData() {
             console.log('Refresh successful:', result.data);
             
         } else {
-            addAssistantMessage(`⚠️ Refresh completed, but couldn't get fresh data: ${result.message}. You're still playing with the current puzzle data.`);
-            console.log('Refresh warning:', result.message);
+            // 刷新失败，保持当前数据
+            addAssistantMessage(`⚠️ Refresh completed, but couldn't get fresh data: ${result.message || 'Unknown error'}. You're still playing with the current puzzle data.`);
+            console.log('Refresh warning:', result);
+            
+            // 确保当前游戏状态正常
+            if (!todaysPuzzle || !todaysPuzzle.groups || !todaysPuzzle.words) {
+                addAssistantMessage("🔄 Reloading current puzzle data...");
+                // 重新加载当前数据
+                try {
+                    await loadTodaysPuzzle();
+                    console.log('Reloaded puzzle data:', todaysPuzzle);
+                    
+                    if (todaysPuzzle && todaysPuzzle.words && todaysPuzzle.groups) {
+                        initializeGame();
+                        displayWords();
+                        addAssistantMessage("✅ Current puzzle data reloaded successfully.");
+                    } else {
+                        addAssistantMessage("❌ Reloaded data is incomplete. Please refresh the page.");
+                        console.error('Incomplete puzzle data after reload:', todaysPuzzle);
+                    }
+                } catch (error) {
+                    console.error('Failed to reload puzzle data:', error);
+                    addAssistantMessage("❌ Failed to reload puzzle data. Please refresh the page.");
+                }
+            }
         }
         
     } catch (error) {
@@ -198,8 +224,13 @@ async function refreshPuzzleData() {
 // 初始化游戏状态
 function initializeGame() {
     console.log('Initializing game...');
+    console.log('todaysPuzzle exists:', !!todaysPuzzle);
+    console.log('todaysPuzzle.words exists:', !!todaysPuzzle?.words);
+    console.log('todaysPuzzle.words length:', todaysPuzzle?.words?.length);
+    
     if (!todaysPuzzle || !todaysPuzzle.words) {
         console.error('No puzzle data available for game initialization');
+        console.error('todaysPuzzle:', todaysPuzzle);
         return;
     }
     
@@ -613,6 +644,52 @@ function setTodayArticleLink() {
     const articleLink = document.getElementById('todayArticleLink');
     if (articleLink) {
         articleLink.href = `/connections-${dateStr}`;
+    }
+}
+
+// 检查管理员模式
+function checkAdminMode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === 'true';
+    
+    if (isAdmin) {
+        // 显示管理员功能
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.classList.remove('hidden');
+            console.log('Admin mode activated via URL parameter');
+            
+            // 添加管理员提示
+            setTimeout(() => {
+                addAssistantMessage("🔧 Admin mode activated. You can now manually refresh puzzle data if needed.");
+            }, 2000);
+        }
+    }
+    
+    // 添加键盘快捷键 (Ctrl+Shift+A) 来切换管理员模式
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.shiftKey && event.key === 'A') {
+            event.preventDefault();
+            toggleAdminMode();
+        }
+    });
+}
+
+// 切换管理员模式
+function toggleAdminMode() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        const isHidden = refreshBtn.classList.contains('hidden');
+        
+        if (isHidden) {
+            refreshBtn.classList.remove('hidden');
+            addAssistantMessage("🔧 Admin mode activated. Manual refresh button is now available. (Ctrl+Shift+A to toggle)");
+            console.log('Admin mode activated via keyboard shortcut');
+        } else {
+            refreshBtn.classList.add('hidden');
+            addAssistantMessage("👤 Admin mode deactivated. Back to normal user mode.");
+            console.log('Admin mode deactivated');
+        }
     }
 }
 
