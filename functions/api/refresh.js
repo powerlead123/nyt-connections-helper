@@ -262,60 +262,81 @@ function parseForceRefresh(html, dateStr) {
     }
 }
 
-// 智能提取Connections单词
+// 智能提取Connections单词 - 基于实际HTML结构
 function extractConnectionsWords(html) {
-    console.log('Extracting Connections words...');
+    console.log('Extracting Connections words from structured content...');
     
-    // 查找包含答案的段落或列表
-    const answerSections = [
-        // 查找包含"answer"的段落
-        ...html.match(/<p[^>]*>[\s\S]*?answer[\s\S]*?<\/p>/gi) || [],
-        // 查找列表
-        ...html.match(/<ul[^>]*>[\s\S]*?<\/ul>/gi) || [],
-        ...html.match(/<ol[^>]*>[\s\S]*?<\/ol>/gi) || [],
-        // 查找包含颜色的段落
-        ...html.match(/<p[^>]*>[\s\S]*?(?:Yellow|Green|Blue|Purple)[\s\S]*?<\/p>/gi) || []
-    ];
+    // 查找包含答案的结构化列表
+    const answerPattern = /<strong>([^<]+):<\/strong>\s*([^<]+)/gi;
+    const answerMatches = [...html.matchAll(answerPattern)];
     
-    console.log(`Found ${answerSections.length} answer sections`);
+    console.log(`Found ${answerMatches.length} structured answer groups`);
     
-    const allWords = new Set();
+    const allWords = [];
     
-    // 从答案区域提取单词
-    answerSections.forEach((section, i) => {
-        const cleanText = section.replace(/<[^>]*>/g, ' ');
-        // 查找大写单词（3-12个字符）
-        const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
-        console.log(`Section ${i+1}: ${words.slice(0, 8).join(', ')}`);
-        words.forEach(word => allWords.add(word));
+    // 从结构化答案中提取
+    answerMatches.forEach((match, i) => {
+        const category = match[1].trim();
+        const wordsText = match[2].trim();
+        
+        console.log(`Group ${i+1}: ${category} -> ${wordsText}`);
+        
+        // 提取单词，处理复合词如 "SAINT PATRICK"
+        const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
+        
+        words.forEach(wordPhrase => {
+            // 处理复合词，如 "SAINT PATRICK" -> ["SAINT", "PATRICK"]
+            if (wordPhrase.includes(' ')) {
+                const parts = wordPhrase.split(' ').filter(p => p.length >= 3);
+                parts.forEach(part => {
+                    if (part.match(/^[A-Z]+$/)) {
+                        allWords.push(part);
+                    }
+                });
+            } else if (wordPhrase.match(/^[A-Z]{3,12}$/)) {
+                allWords.push(wordPhrase);
+            }
+        });
     });
     
-    // 如果单词不够，从整个HTML中提取
-    if (allWords.size < 16) {
-        console.log('Not enough words, extracting from full HTML...');
-        const cleanHtml = html.replace(/<[^>]*>/g, ' ');
-        const allHtmlWords = cleanHtml.match(/\b[A-Z]{3,12}\b/g) || [];
-        allHtmlWords.forEach(word => allWords.add(word));
-    }
+    console.log(`Extracted ${allWords.length} words from structured content: ${allWords.join(', ')}`);
     
-    const wordArray = Array.from(allWords);
+    // 如果结构化提取不够，尝试其他方法
+    if (allWords.length < 16) {
+        console.log('Not enough structured words, trying alternative extraction...');
+        
+        // 查找列表项中的单词
+        const listItems = html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [];
+        
+        listItems.forEach((item, i) => {
+            const cleanText = item.replace(/<[^>]*>/g, ' ');
+            const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
+            console.log(`List item ${i+1}: ${words.slice(0, 6).join(', ')}`);
+            words.forEach(word => {
+                if (!allWords.includes(word)) {
+                    allWords.push(word);
+                }
+            });
+        });
+    }
     
     // 过滤掉常见的非游戏单词
     const excludeWords = [
         'MASHABLE', 'CONNECTIONS', 'NYT', 'PUZZLE', 'ANSWER', 'HINT', 'TODAY',
         'DAILY', 'GAME', 'ARTICLE', 'CONTENT', 'SEARCH', 'RESULT', 'NEWS',
         'TECH', 'SCIENCE', 'SOCIAL', 'MEDIA', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE',
-        'SEPTEMBER', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
+        'SEPTEMBER', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY',
+        'STRONG', 'FIRST', 'ONES', 'FAMOUS', 'WHAT', 'MIGHT', 'REFER'
     ];
     
-    const filtered = wordArray.filter(word => {
+    const filtered = allWords.filter(word => {
         return !excludeWords.includes(word) && 
                word.length >= 3 && 
                word.length <= 12 &&
                !/^\d+$/.test(word); // 排除纯数字
     });
     
-    console.log(`Filtered to ${filtered.length} words: ${filtered.slice(0, 20).join(', ')}`);
+    console.log(`Final filtered words (${filtered.length}): ${filtered.slice(0, 20).join(', ')}`);
     
     return filtered.slice(0, 20); // 返回前20个单词
 }
