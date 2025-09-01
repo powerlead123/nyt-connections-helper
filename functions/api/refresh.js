@@ -88,17 +88,14 @@ async function forceFetchFreshData() {
         
         console.log(`Force fetching for: ${monthName} ${day}, ${year}`);
         
-        // 尝试多个URL
+        // 使用正确的URL格式
         const urls = [
-            `https://mashable.com/article/nyt-connections-hint-answer-today-${monthName}-${day}-${year}`,
-            `https://mashable.com/article/nyt-connections-answer-today-${monthName}-${day}-${year}`,
-            `https://mashable.com/article/connections-hint-answer-today-${monthName}-${day}-${year}`
+            `https://mashable.com/article/nyt-connections-hint-answer-today-${monthName}-${day}-${year}`
         ];
         
-        // 尝试多个代理
+        // 使用可靠的代理服务
         const proxyServices = [
-            (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+            (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
         ];
         
         for (const baseUrl of urls) {
@@ -109,7 +106,10 @@ async function forceFetchFreshData() {
                     
                     const response = await fetch(proxyUrl, {
                         method: 'GET',
-                        signal: AbortSignal.timeout(20000) // 20秒超时
+                        signal: AbortSignal.timeout(30000), // 增加到30秒超时
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
                     });
                     
                     if (!response.ok) {
@@ -121,6 +121,8 @@ async function forceFetchFreshData() {
                     if (proxyUrl.includes('allorigins.win')) {
                         const data = await response.json();
                         html = data.contents;
+                    } else if (proxyUrl.includes('corsproxy.io') || proxyUrl.includes('thingproxy')) {
+                        html = await response.text();
                     } else {
                         html = await response.text();
                     }
@@ -160,8 +162,8 @@ function parseForceRefresh(html, dateStr) {
     try {
         console.log('Starting force refresh parsing...');
         
-        // 策略1: 查找颜色提示
-        const colorPattern = /(Yellow|Green|Blue|Purple):\s*<strong>([^<]+)<\/strong>/gi;
+        // 查找颜色提示 - 使用更准确的模式
+        const colorPattern = /(Yellow|Green|Blue|Purple):\s*<b>([^<]+)<\/b>/gi;
         const colorMatches = [...html.matchAll(colorPattern)];
         
         console.log(`Found ${colorMatches.length} color matches`);
@@ -169,13 +171,18 @@ function parseForceRefresh(html, dateStr) {
         if (colorMatches.length >= 4) {
             const hints = {};
             colorMatches.forEach(match => {
-                hints[match[1]] = match[2].trim();
+                const color = match[1];
+                const hint = match[2].trim();
+                // 只保留第一个提示（避免重复）
+                if (!hints[color]) {
+                    hints[color] = hint;
+                }
             });
             
             console.log('Extracted hints:', hints);
             
-            // 提取单词
-            const words = extractForceRefreshWords(html);
+            // 提取单词 - 使用更智能的方法
+            const words = extractConnectionsWords(html);
             console.log(`Extracted ${words.length} words:`, words.slice(0, 16));
             
             if (words.length >= 16) {
@@ -246,7 +253,65 @@ function parseForceRefresh(html, dateStr) {
     }
 }
 
-// 强制刷新单词提取
+// 智能提取Connections单词
+function extractConnectionsWords(html) {
+    console.log('Extracting Connections words...');
+    
+    // 查找包含答案的段落或列表
+    const answerSections = [
+        // 查找包含"answer"的段落
+        ...html.match(/<p[^>]*>[\s\S]*?answer[\s\S]*?<\/p>/gi) || [],
+        // 查找列表
+        ...html.match(/<ul[^>]*>[\s\S]*?<\/ul>/gi) || [],
+        ...html.match(/<ol[^>]*>[\s\S]*?<\/ol>/gi) || [],
+        // 查找包含颜色的段落
+        ...html.match(/<p[^>]*>[\s\S]*?(?:Yellow|Green|Blue|Purple)[\s\S]*?<\/p>/gi) || []
+    ];
+    
+    console.log(`Found ${answerSections.length} answer sections`);
+    
+    const allWords = new Set();
+    
+    // 从答案区域提取单词
+    answerSections.forEach((section, i) => {
+        const cleanText = section.replace(/<[^>]*>/g, ' ');
+        // 查找大写单词（3-12个字符）
+        const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
+        console.log(`Section ${i+1}: ${words.slice(0, 8).join(', ')}`);
+        words.forEach(word => allWords.add(word));
+    });
+    
+    // 如果单词不够，从整个HTML中提取
+    if (allWords.size < 16) {
+        console.log('Not enough words, extracting from full HTML...');
+        const cleanHtml = html.replace(/<[^>]*>/g, ' ');
+        const allHtmlWords = cleanHtml.match(/\b[A-Z]{3,12}\b/g) || [];
+        allHtmlWords.forEach(word => allWords.add(word));
+    }
+    
+    const wordArray = Array.from(allWords);
+    
+    // 过滤掉常见的非游戏单词
+    const excludeWords = [
+        'MASHABLE', 'CONNECTIONS', 'NYT', 'PUZZLE', 'ANSWER', 'HINT', 'TODAY',
+        'DAILY', 'GAME', 'ARTICLE', 'CONTENT', 'SEARCH', 'RESULT', 'NEWS',
+        'TECH', 'SCIENCE', 'SOCIAL', 'MEDIA', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE',
+        'SEPTEMBER', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
+    ];
+    
+    const filtered = wordArray.filter(word => {
+        return !excludeWords.includes(word) && 
+               word.length >= 3 && 
+               word.length <= 12 &&
+               !/^\d+$/.test(word); // 排除纯数字
+    });
+    
+    console.log(`Filtered to ${filtered.length} words: ${filtered.slice(0, 20).join(', ')}`);
+    
+    return filtered.slice(0, 20); // 返回前20个单词
+}
+
+// 旧的提取函数（保留作为备用）
 function extractForceRefreshWords(html) {
     // 查找可能包含答案的区域
     const answerSections = [
