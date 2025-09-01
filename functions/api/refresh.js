@@ -162,9 +162,18 @@ function parseForceRefresh(html, dateStr) {
     try {
         console.log('Starting force refresh parsing...');
         
-        // 查找颜色提示 - 使用更准确的模式
-        const colorPattern = /(Yellow|Green|Blue|Purple):\s*<b>([^<]+)<\/b>/gi;
-        const colorMatches = [...html.matchAll(colorPattern)];
+        // 查找颜色提示 - 尝试多种格式
+        const colorPatterns = [
+            /(Yellow|Green|Blue|Purple):\s*<strong>([^<]+)<\/strong>/gi,
+            /(Yellow|Green|Blue|Purple):\s*<b>([^<]+)<\/b>/gi,
+            /(Yellow|Green|Blue|Purple):\s*([^\n<]+)/gi
+        ];
+        
+        let colorMatches = [];
+        for (const pattern of colorPatterns) {
+            colorMatches = [...html.matchAll(pattern)];
+            if (colorMatches.length > 0) break;
+        }
         
         console.log(`Found ${colorMatches.length} color matches`);
         
