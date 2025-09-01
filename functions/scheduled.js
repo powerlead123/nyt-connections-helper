@@ -319,12 +319,106 @@ async function fetchFromMashable() {
     }
 }
 
-// 解析Mashable HTML内容
+// 解析Mashable HTML内容 - 改进版
 function parseMashableHTML(html, dateStr) {
     try {
         console.log('开始Mashable HTML解析...');
         
-        // 方法1: 查找完整的答案格式 (基于调试发现)
+        // 新方法1: 查找今天日期的确认
+        const today = new Date();
+        const monthName = ['january', 'february', 'march', 'april', 'may', 'june',
+                          'july', 'august', 'september', 'october', 'november', 'december'][today.getMonth()];
+        const day = today.getDate();
+        
+        const datePatterns = [
+            new RegExp(`${monthName}\\s+${day}`, 'i'),
+            new RegExp(`${day}\\s+${monthName}`, 'i'),
+            new RegExp(`${today.getMonth() + 1}[\/\\-]${day}`, 'i'),
+            new RegExp(`${day}[\/\\-]${today.getMonth() + 1}`, 'i')
+        ];
+        
+        let hasDateMatch = false;
+        for (const pattern of datePatterns) {
+            if (pattern.test(html)) {
+                hasDateMatch = true;
+                console.log('找到今天日期匹配');
+                break;
+            }
+        }
+        
+        if (!hasDateMatch) {
+            console.log('警告: 未找到今天日期，可能不是今天的文章');
+        }
+        
+        // 新方法2: 更精确的答案提取
+        const improvedAnswerPattern = /(Yellow|Green|Blue|Purple)[\s\S]*?<strong[^>]*>([^<]+)<\/strong>/gi;
+        const colorMatches = [...html.matchAll(improvedAnswerPattern)];
+        
+        console.log(`找到 ${colorMatches.length} 个颜色匹配`);
+        
+        if (colorMatches.length >= 4) {
+            const hints = {};
+            colorMatches.forEach(match => {
+                const color = match[1];
+                const hint = match[2].trim();
+                hints[color] = hint;
+                console.log(`${color}: ${hint}`);
+            });
+            
+            // 新方法3: 在答案区域查找实际单词
+            const answerSectionPattern = /(?:answer|solution)[\s\S]{0,2000}/gi;
+            const answerSections = html.match(answerSectionPattern) || [];
+            
+            console.log(`找到 ${answerSections.length} 个答案区域`);
+            
+            for (const section of answerSections) {
+                // 查找大写单词列表
+                const wordListPatterns = [
+                    // 逗号分隔的大写单词
+                    /([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*)/g,
+                    // 列表项中的单词
+                    /<li[^>]*>([A-Z][A-Z\-\d\s]*)<\/li>/gi,
+                    // 强调标签中的单词
+                    /<(?:strong|b)[^>]*>([A-Z][A-Z\-\d\s]*)<\/(?:strong|b)>/gi
+                ];
+                
+                const foundWords = [];
+                
+                for (const pattern of wordListPatterns) {
+                    const matches = [...section.matchAll(pattern)];
+                    for (const match of matches) {
+                        if (match.length >= 5) {
+                            // 4个单词的组
+                            foundWords.push([match[1], match[2], match[3], match[4]]);
+                        } else if (match[1]) {
+                            // 单个单词
+                            const word = match[1].trim().toUpperCase();
+                            if (word.length >= 2 && word.length <= 15) {
+                                foundWords.push(word);
+                            }
+                        }
+                    }
+                }
+                
+                console.log('在答案区域找到的单词:', foundWords.slice(0, 20));
+                
+                // 如果找到足够的单词，创建分组
+                if (foundWords.length >= 16 || (foundWords.length >= 4 && foundWords[0] instanceof Array)) {
+                    const groups = createGroupsFromWords(foundWords, hints);
+                    if (groups.length === 4) {
+                        console.log('成功从答案区域创建分组');
+                        return {
+                            date: dateStr,
+                            words: groups.flatMap(g => g.words),
+                            groups: groups,
+                            source: 'Mashable (Improved)'
+                        };
+                    }
+                }
+            }
+        }
+        
+        // 方法1: 查找完整的答案格式 (保留原有逻辑作为备用)
         const answerPattern = /Yellow:\s*<strong>([^<]+)<\/strong>[\s\S]*?Green:\s*<strong>([^<]+)<\/strong>[\s\S]*?Blue:[\s\S]*?<strong>([^<]+)<\/strong>[\s\S]*?Purple:[\s\S]*?<strong>([^<]+)<\/strong>/i;
         const answerMatch = html.match(answerPattern);
         
@@ -384,33 +478,38 @@ function parseMashableHTML(html, dateStr) {
                             }
                         ];
                     } else {
-                        // 使用已知的正确答案
-                        groups = [
-                            {
-                                theme: hints.Yellow,
-                                words: ['NAME', 'PERSONALITY', 'STAR', 'CELEBRITY'],
-                                difficulty: 'yellow',
-                                hint: hints.Yellow
-                            },
-                            {
-                                theme: hints.Green,
-                                words: ['BALLOON', 'MOUNT', 'MUSHROOM', 'WAX'],
-                                difficulty: 'green',
-                                hint: hints.Green
-                            },
-                            {
-                                theme: hints.Blue,
-                                words: ['7-ELEVEN', 'CHEVRON', 'GULF', 'SHELL'],
-                                difficulty: 'blue',
-                                hint: hints.Blue
-                            },
-                            {
-                                theme: hints.Purple,
-                                words: ['7-10', 'BANANA', 'LICKETY', 'STOCK'],
-                                difficulty: 'purple',
-                                hint: hints.Purple
-                            }
-                        ];
+                        // 动态提取单词 - 不使用硬编码答案
+                        const allWords = extractAllWordsFromHTML(html);
+                        console.log('提取到的所有单词:', allWords.slice(0, 20));
+                        
+                        if (allWords.length >= 16) {
+                            groups = [
+                                {
+                                    theme: hints.Yellow,
+                                    words: allWords.slice(0, 4),
+                                    difficulty: 'yellow',
+                                    hint: hints.Yellow
+                                },
+                                {
+                                    theme: hints.Green,
+                                    words: allWords.slice(4, 8),
+                                    difficulty: 'green',
+                                    hint: hints.Green
+                                },
+                                {
+                                    theme: hints.Blue,
+                                    words: allWords.slice(8, 12),
+                                    difficulty: 'blue',
+                                    hint: hints.Blue
+                                },
+                                {
+                                    theme: hints.Purple,
+                                    words: allWords.slice(12, 16),
+                                    difficulty: 'purple',
+                                    hint: hints.Purple
+                                }
+                            ];
+                        }
                     }
                     
                     console.log('成功解析4个组');
@@ -555,6 +654,87 @@ function extractWordsFromText(text) {
         .filter((word, index, arr) => arr.indexOf(word) === index);
     
     return cleanWords;
+}
+
+// 从HTML中提取所有可能的Connections单词
+function extractAllWordsFromHTML(html) {
+    // 查找可能包含答案的区域
+    const answerSections = [
+        // 查找包含"answer"的段落
+        ...html.match(/<p[^>]*>[\s\S]*?answer[\s\S]*?<\/p>/gi) || [],
+        // 查找包含颜色的段落  
+        ...html.match(/<p[^>]*>[\s\S]*?(?:green|yellow|blue|purple)[\s\S]*?<\/p>/gi) || [],
+        // 查找列表
+        ...html.match(/<ul[^>]*>[\s\S]*?<\/ul>/gi) || [],
+        ...html.match(/<ol[^>]*>[\s\S]*?<\/ol>/gi) || [],
+        // 查找包含答案的div
+        ...html.match(/<div[^>]*>[\s\S]*?(?:answer|solution)[\s\S]*?<\/div>/gi) || []
+    ];
+    
+    console.log(`找到 ${answerSections.length} 个可能的答案区域`);
+    
+    const allWords = new Set();
+    
+    // 从答案区域提取单词
+    for (const section of answerSections) {
+        const words = extractConnectionsWords(section);
+        words.forEach(word => allWords.add(word));
+    }
+    
+    // 如果从答案区域提取的单词不够，从整个HTML提取
+    if (allWords.size < 16) {
+        const generalWords = extractConnectionsWords(html);
+        generalWords.forEach(word => allWords.add(word));
+    }
+    
+    const wordArray = Array.from(allWords);
+    
+    // 过滤掉明显不是答案的单词
+    const filteredWords = wordArray.filter(word => {
+        // 排除网站相关词汇
+        const excludeWords = [
+            'MASHABLE', 'CONNECTIONS', 'WORDLE', 'NYT', 'TIMES', 'PUZZLE', 'GAME',
+            'ANSWER', 'HINT', 'TODAY', 'DAILY', 'SOLUTION', 'CATEGORY', 'CATEGORIES',
+            'HTML', 'CSS', 'JAVASCRIPT', 'ARTICLE', 'CONTENT', 'PAGE', 'WEBSITE',
+            'SEARCH', 'RESULT', 'TECH', 'SCIENCE', 'NEWS', 'SOCIAL', 'MEDIA',
+            'SUBSCRIBE', 'NEWSLETTER', 'EMAIL', 'FOLLOW', 'SHARE', 'LIKE',
+            'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+            'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+        ];
+        
+        return !excludeWords.includes(word) && 
+               word.length >= 3 && 
+               word.length <= 12 &&
+               /^[A-Z0-9\-]+$/.test(word);
+    });
+    
+    console.log(`过滤后剩余 ${filteredWords.length} 个候选单词:`, filteredWords.slice(0, 20));
+    
+    return filteredWords.slice(0, 20); // 返回前20个最可能的单词
+}
+
+// 提取Connections风格的单词
+function extractConnectionsWords(text) {
+    const cleanText = text.replace(/<[^>]*>/g, ' ');
+    
+    const patterns = [
+        /\b[A-Z]{3,12}\b/g,           // 全大写单词 (3-12字符)
+        /\b[A-Z][a-z]{2,11}\b/g,      // 首字母大写 (3-12字符)
+        /\b[A-Z][\w\-']{2,11}\b/g,    // 大写开头，可能包含连字符 (3-12字符)
+        /\b\d+[\-\/]\w+\b/g,          // 数字组合 (如 7-ELEVEN)
+        /"([A-Za-z\-']{3,12})"/g      // 引号中的单词
+    ];
+    
+    const words = [];
+    for (const pattern of patterns) {
+        const matches = cleanText.match(pattern) || [];
+        words.push(...matches);
+    }
+    
+    return words
+        .map(word => word.replace(/['"]/g, '').trim().toUpperCase())
+        .filter(word => word.length >= 3 && word.length <= 12)
+        .filter((word, index, arr) => arr.indexOf(word) === index);
 }
 
 async function fetchFromNYT() {
