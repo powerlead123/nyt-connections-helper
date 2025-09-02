@@ -319,72 +319,95 @@ function extractConnectionsWords(html) {
     
     console.log('Cleaned section preview:', cleanSection.substring(0, 300));
     
-    // 使用简单直接的方法提取答案
-    const patterns = [
-        {
-            name: 'First appearance',
-            start: 'First appearance:',
-            end: 'Ones celebrated'
-        },
-        {
-            name: 'Ones celebrated with holidays', 
-            start: 'Ones celebrated with holidays:',
-            end: 'Famous poets'
-        },
-        {
-            name: 'Famous poets',
-            start: 'Famous poets:',
-            end: 'What'
-        },
-        {
-            name: 'What "Cardinal" might refer to',
-            start: 'What "Cardinal" might refer to:',
-            end: "Don't"
-        }
+    // 通用方法：查找颜色分组
+    console.log('Using universal color-based parsing...');
+    
+    // 查找颜色提示模式
+    const colorHints = {};
+    const colorPatterns = [
+        /Yellow[:\s]*<strong[^>]*>([^<]+)<\/strong>/i,
+        /Green[:\s]*<strong[^>]*>([^<]+)<\/strong>/i,
+        /Blue[:\s]*<strong[^>]*>([^<]+)<\/strong>/i,
+        /Purple[:\s]*<strong[^>]*>([^<]+)<\/strong>/i
     ];
     
-    const groupedWords = [];
-    
-    patterns.forEach((pattern, i) => {
-        const startIndex = cleanSection.indexOf(pattern.start);
-        if (startIndex !== -1) {
-            const endIndex = cleanSection.indexOf(pattern.end, startIndex + pattern.start.length);
-            
-            let wordsText;
-            if (endIndex !== -1) {
-                wordsText = cleanSection.substring(startIndex + pattern.start.length, endIndex);
-            } else {
-                // 如果没找到结束标记，取到文本末尾
-                wordsText = cleanSection.substring(startIndex + pattern.start.length);
-            }
-            
-            // 清理文本
-            wordsText = wordsText.trim();
-            
-            console.log(`Group ${i+1}: ${pattern.name} -> ${wordsText}`);
-            
-            // 分割单词
-            const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
-            
-            if (words.length > 0) {
-                groupedWords.push({
-                    category: pattern.name,
-                    words: words
-                });
-            }
+    const colors = ['Yellow', 'Green', 'Blue', 'Purple'];
+    colorPatterns.forEach((pattern, i) => {
+        const match = answerSection.match(pattern);
+        if (match) {
+            colorHints[colors[i]] = match[1].trim();
+            console.log(`Found ${colors[i]} hint: ${match[1].trim()}`);
         }
     });
     
-    console.log(`Extracted ${groupedWords.length} groups using direct method`);
-    
-    // 如果直接方法成功，返回结果
-    if (groupedWords.length >= 4) {
-        return groupedWords;
+    // 如果找到颜色提示，尝试提取对应的单词
+    if (Object.keys(colorHints).length >= 4) {
+        console.log('Found all 4 color hints, extracting words...');
+        
+        // 查找答案单词的多种模式
+        const wordPatterns = [
+            // 模式1: 逗号分隔的大写单词组
+            /([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*)/g,
+            // 模式2: 列表项中的单词
+            /<li[^>]*>([A-Z][A-Z\-\d\s]*)<\/li>/gi,
+            // 模式3: 强调标签中的单词
+            /<(?:strong|b)[^>]*>([A-Z][A-Z\-\d\s]+)<\/(?:strong|b)>/gi
+        ];
+        
+        const extractedGroups = [];
+        
+        for (const pattern of wordPatterns) {
+            const matches = [...answerSection.matchAll(pattern)];
+            console.log(`Pattern found ${matches.length} matches`);
+            
+            if (matches.length >= 4) {
+                // 如果是4个单词一组的模式
+                if (pattern.source.includes('([A-Z][A-Z\\-\\d]*),')) {
+                    matches.forEach((match, index) => {
+                        if (index < 4) {
+                            const words = [match[1], match[2], match[3], match[4]];
+                            extractedGroups.push({
+                                category: colors[index] || `Group ${index + 1}`,
+                                words: words.filter(w => w && w.length > 0)
+                            });
+                        }
+                    });
+                } else {
+                    // 单个单词的模式，需要分组
+                    const allWords = matches.map(m => m[1].trim().toUpperCase()).filter(w => w.length > 0);
+                    
+                    // 过滤掉网站相关词汇
+                    const filteredWords = allWords.filter(word => {
+                        const exclude = ['NYT', 'CONNECTIONS', 'MASHABLE', 'TODAY', 'ANSWER', 'PUZZLE', 'HINT', 'GAME'];
+                        return !exclude.includes(word) && word.length >= 3 && word.length <= 12;
+                    });
+                    
+                    console.log('Filtered words:', filteredWords.slice(0, 16));
+                    
+                    if (filteredWords.length >= 16) {
+                        for (let i = 0; i < 4; i++) {
+                            const groupWords = filteredWords.slice(i * 4, (i + 1) * 4);
+                            if (groupWords.length === 4) {
+                                extractedGroups.push({
+                                    category: colors[i] || `Group ${i + 1}`,
+                                    words: groupWords
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                if (extractedGroups.length >= 4) {
+                    console.log('Successfully extracted 4 groups');
+                    return extractedGroups.slice(0, 4);
+                }
+            }
+        }
     }
     
-    // 否则尝试备用方法
-    console.log('Direct method failed, trying fallback method...');
-    return extractFallbackWords(html);
+    // 如果颜色方法失败，尝试通用文本解析
+    console.log('Color method failed, trying generic text parsing...');
+    return extractGenericAnswers(cleanSection);
 }
 
 // 解析Connections内容的核心函数
@@ -515,6 +538,58 @@ function parseWithPatterns(content) {
     
     // 最后尝试备用方法
     return extractFallbackWords(content);
+}
+
+// 通用答案提取方法
+function extractGenericAnswers(cleanText) {
+    console.log('Using generic answer extraction...');
+    
+    // 查找可能的答案格式
+    const answerFormats = [
+        // 格式1: "Category: WORD1, WORD2, WORD3, WORD4"
+        /([^:]+):\s*([A-Z][A-Z\-\d]*(?:,\s*[A-Z][A-Z\-\d]*){3})/g,
+        // 格式2: 连续的大写单词组
+        /([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*)/g
+    ];
+    
+    const groups = [];
+    
+    for (const format of answerFormats) {
+        const matches = [...cleanText.matchAll(format)];
+        console.log(`Format found ${matches.length} potential groups`);
+        
+        for (const match of matches) {
+            if (format.source.includes('([^:]+):')) {
+                // 有类别名的格式
+                const category = match[1].trim();
+                const wordsText = match[2];
+                const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
+                
+                if (words.length === 4) {
+                    groups.push({
+                        category: category,
+                        words: words
+                    });
+                }
+            } else {
+                // 只有单词的格式
+                const words = [match[1], match[2], match[3], match[4]].filter(w => w && w.length > 0);
+                if (words.length === 4) {
+                    groups.push({
+                        category: `Group ${groups.length + 1}`,
+                        words: words
+                    });
+                }
+            }
+            
+            if (groups.length >= 4) break;
+        }
+        
+        if (groups.length >= 4) break;
+    }
+    
+    console.log(`Generic extraction found ${groups.length} groups`);
+    return groups.slice(0, 4);
 }
 
 // 备用提取方法
