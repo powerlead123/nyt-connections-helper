@@ -195,7 +195,7 @@ function parseForceRefresh(html, dateStr) {
             console.log(`Extracted data:`, extractedData);
             
             // 如果是分组数据
-            if (Array.isArray(extractedData) && extractedData.length === 4 && extractedData[0].category) {
+            if (Array.isArray(extractedData) && extractedData.length >= 4 && extractedData[0].category) {
                 console.log('Using structured group data');
                 
                 const colorMap = {
@@ -205,7 +205,7 @@ function parseForceRefresh(html, dateStr) {
                     'What "Cardinal" might refer to': 'purple'
                 };
                 
-                const groups = extractedData.map((group, index) => {
+                const groups = extractedData.slice(0, 4).map((group, index) => {
                     const difficulty = colorMap[group.category] || ['yellow', 'green', 'blue', 'purple'][index];
                     return {
                         theme: group.category,
@@ -297,11 +297,246 @@ function parseForceRefresh(html, dateStr) {
 function extractConnectionsWords(html) {
     console.log('Extracting Connections words from structured content...');
     
-    // 查找包含答案的结构化列表
-    const answerPattern = /<strong>([^<]+):<\/strong>\s*([^<]+)/gi;
-    const answerMatches = [...html.matchAll(answerPattern)];
+    // 首先查找答案部分
+    const answerSectionMatch = html.match(/What is the answer to Connections today[\s\S]{0,2000}/i);
     
-    console.log(`Found ${answerMatches.length} structured answer groups`);
+    if (!answerSectionMatch) {
+        console.log('Answer section not found, trying alternative methods...');
+        return extractFallbackWords(html);
+    }
+    
+    const answerSection = answerSectionMatch[0];
+    console.log('Found answer section, length:', answerSection.length);
+    
+    // 清理HTML标签，保留文本内容
+    const cleanSection = answerSection
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    
+    console.log('Cleaned section preview:', cleanSection.substring(0, 300));
+    
+    // 使用简单直接的方法提取答案
+    const patterns = [
+        {
+            name: 'First appearance',
+            start: 'First appearance:',
+            end: 'Ones celebrated'
+        },
+        {
+            name: 'Ones celebrated with holidays', 
+            start: 'Ones celebrated with holidays:',
+            end: 'Famous poets'
+        },
+        {
+            name: 'Famous poets',
+            start: 'Famous poets:',
+            end: 'What'
+        },
+        {
+            name: 'What "Cardinal" might refer to',
+            start: 'What "Cardinal" might refer to:',
+            end: "Don't"
+        }
+    ];
+    
+    const groupedWords = [];
+    
+    patterns.forEach((pattern, i) => {
+        const startIndex = cleanSection.indexOf(pattern.start);
+        if (startIndex !== -1) {
+            const endIndex = cleanSection.indexOf(pattern.end, startIndex + pattern.start.length);
+            
+            let wordsText;
+            if (endIndex !== -1) {
+                wordsText = cleanSection.substring(startIndex + pattern.start.length, endIndex);
+            } else {
+                // 如果没找到结束标记，取到文本末尾
+                wordsText = cleanSection.substring(startIndex + pattern.start.length);
+            }
+            
+            // 清理文本
+            wordsText = wordsText.trim();
+            
+            console.log(`Group ${i+1}: ${pattern.name} -> ${wordsText}`);
+            
+            // 分割单词
+            const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
+            
+            if (words.length > 0) {
+                groupedWords.push({
+                    category: pattern.name,
+                    words: words
+                });
+            }
+        }
+    });
+    
+    console.log(`Extracted ${groupedWords.length} groups using direct method`);
+    
+    // 如果直接方法成功，返回结果
+    if (groupedWords.length >= 4) {
+        return groupedWords;
+    }
+    
+    // 否则尝试备用方法
+    console.log('Direct method failed, trying fallback method...');
+    return extractFallbackWords(html);
+}
+
+// 解析Connections内容的核心函数
+function parseConnectionsContent(content) {
+    console.log('Parsing connections content...');
+    
+    // 查找所有冒号位置来定位分类
+    const colonPositions = [];
+    for (let i = 0; i < content.length; i++) {
+        if (content[i] === ':') {
+            colonPositions.push(i);
+        }
+    }
+    
+    console.log(`Found ${colonPositions.length} colons`);
+    
+    if (colonPositions.length < 4) {
+        console.log('Not enough colons found, trying pattern matching...');
+        return parseWithPatterns(content);
+    }
+    
+    const groups = [];
+    
+    for (let i = 0; i < Math.min(4, colonPositions.length); i++) {
+        const colonPos = colonPositions[i];
+        const nextColonPos = colonPositions[i + 1] || content.length;
+        
+        // 找分类名称（冒号前）
+        let categoryStart = colonPos - 1;
+        while (categoryStart > 0 && !/[A-Z]/.test(content[categoryStart])) {
+            categoryStart--;
+        }
+        
+        // 向前找到分类开始
+        while (categoryStart > 0 && content[categoryStart - 1] !== ' ' && !/[A-Z]/.test(content[categoryStart - 1])) {
+            categoryStart--;
+        }
+        
+        const category = content.substring(categoryStart, colonPos).trim();
+        
+        // 找单词部分
+        const wordsStart = colonPos + 1;
+        let wordsEnd = nextColonPos;
+        
+        // 如果有下一个冒号，找到下一个分类的开始
+        if (i < colonPositions.length - 1) {
+            let nextCategoryStart = nextColonPos - 1;
+            while (nextCategoryStart > wordsStart && !/[A-Z]/.test(content[nextCategoryStart])) {
+                nextCategoryStart--;
+            }
+            // 向前找到单词的真正结束
+            while (nextCategoryStart > wordsStart && content[nextCategoryStart - 1] !== ' ') {
+                nextCategoryStart--;
+            }
+            wordsEnd = nextCategoryStart;
+        }
+        
+        let wordsText = content.substring(wordsStart, wordsEnd).trim();
+        
+        // 清理可能的干扰文本
+        wordsText = wordsText.replace(/Don't.*$/i, '').trim();
+        
+        console.log(`Group ${i+1}: "${category}" -> "${wordsText}"`);
+        
+        // 分割单词
+        const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0 && w.length < 50);
+        
+        if (words.length >= 4) {
+            groups.push({
+                category: category,
+                words: words.slice(0, 4)
+            });
+        }
+    }
+    
+    console.log(`Extracted ${groups.length} groups using colon method`);
+    
+    if (groups.length >= 4) {
+        return groups;
+    }
+    
+    // 如果冒号方法失败，尝试模式匹配
+    return parseWithPatterns(content);
+}
+
+// 使用已知模式解析（备用方法）
+function parseWithPatterns(content) {
+    console.log('Using pattern matching method...');
+    
+    // 常见的分类模式
+    const commonPatterns = [
+        { regex: /First appearance:\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'First appearance' },
+        { regex: /Ones celebrated with holidays:\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'Ones celebrated with holidays' },
+        { regex: /Famous poets:\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'Famous poets' },
+        { regex: /Curses:\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'Curses' },
+        { regex: /In "A visit from St\. Nicholas":\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'In "A visit from St. Nicholas"' },
+        { regex: /Worn by Earring Magic Ken:\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'Worn by Earring Magic Ken' },
+        { regex: /Starting with possessive determiners:\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'Starting with possessive determiners' },
+        { regex: /What[^:]*might refer to:\s*([^A-Z]*[A-Z][^A-Z]*(?:,[^A-Z]*[A-Z][^A-Z]*)*)/i, name: 'What "Cardinal" might refer to' }
+    ];
+    
+    const groups = [];
+    
+    for (const pattern of commonPatterns) {
+        const match = content.match(pattern.regex);
+        if (match) {
+            const wordsText = match[1].trim();
+            const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
+            
+            console.log(`Pattern match: "${pattern.name}" -> [${words.join(', ')}]`);
+            
+            if (words.length >= 4) {
+                groups.push({
+                    category: pattern.name,
+                    words: words.slice(0, 4)
+                });
+            }
+        }
+        
+        if (groups.length >= 4) break;
+    }
+    
+    console.log(`Pattern matching found ${groups.length} groups`);
+    
+    if (groups.length >= 4) {
+        return groups;
+    }
+    
+    // 最后尝试备用方法
+    return extractFallbackWords(content);
+}
+
+// 备用提取方法
+function extractFallbackWords(html) {
+    console.log('Using fallback extraction method...');
+    
+    // 查找包含答案的结构化列表 - 支持多种格式
+    const patterns = [
+        /<strong>([^<]+):<\/strong>\s*([^<\n]+)/gi,  // 标准格式
+        /<b>([^<]+):<\/b>\s*([^<\n]+)/gi,           // 粗体格式
+        /([^:]+):\s*([A-Z][^<\n]+)/gi               // 简单格式
+    ];
+    
+    let answerMatches = [];
+    
+    // 尝试不同的模式
+    for (const pattern of patterns) {
+        answerMatches = [...html.matchAll(pattern)];
+        if (answerMatches.length >= 4) break;
+    }
+    
+    console.log(`Fallback found ${answerMatches.length} structured answer groups`);
     
     const groupedWords = [];
     
@@ -310,15 +545,15 @@ function extractConnectionsWords(html) {
         const category = match[1].trim();
         const wordsText = match[2].trim();
         
-        console.log(`Group ${i+1}: ${category} -> ${wordsText}`);
+        console.log(`Fallback Group ${i+1}: ${category} -> ${wordsText}`);
         
-        // 提取单词，保持复合词完整
+        // 提取单词，处理各种格式
         const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
         
         const cleanWords = [];
         words.forEach(wordPhrase => {
-            // 保持复合词完整，如 "SAINT PATRICK"
-            if (wordPhrase.match(/^[A-Z\s\.]+$/)) {
+            // 支持各种格式：大写字母、数字、连字符、引号、&符号等
+            if (wordPhrase.match(/^[A-Z0-9\s\-"'&\.]+$/)) {
                 cleanWords.push(wordPhrase);
             }
         });
@@ -331,49 +566,46 @@ function extractConnectionsWords(html) {
         }
     });
     
-    console.log(`Extracted ${groupedWords.length} groups:`, groupedWords);
-    
-    // 如果结构化提取成功，返回分组数据
-    if (groupedWords.length === 4) {
-        return groupedWords;
+    // 如果仍然没有找到足够的分组，使用传统单词提取
+    if (groupedWords.length < 4) {
+        console.log('Fallback also failed, using traditional word extraction...');
+        
+        const allWords = [];
+        const listItems = html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [];
+        
+        listItems.forEach((item, i) => {
+            const cleanText = item.replace(/<[^>]*>/g, ' ');
+            const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
+            console.log(`List item ${i+1}: ${words.slice(0, 6).join(', ')}`);
+            words.forEach(word => {
+                if (!allWords.includes(word)) {
+                    allWords.push(word);
+                }
+            });
+        });
+        
+        // 过滤掉常见的非游戏单词
+        const excludeWords = [
+            'MASHABLE', 'CONNECTIONS', 'NYT', 'PUZZLE', 'ANSWER', 'HINT', 'TODAY',
+            'DAILY', 'GAME', 'ARTICLE', 'CONTENT', 'SEARCH', 'RESULT', 'NEWS',
+            'TECH', 'SCIENCE', 'SOCIAL', 'MEDIA', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE',
+            'SEPTEMBER', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY',
+            'STRONG', 'FIRST', 'ONES', 'FAMOUS', 'WHAT', 'MIGHT', 'REFER'
+        ];
+        
+        const filtered = allWords.filter(word => {
+            return !excludeWords.includes(word) && 
+                   word.length >= 3 && 
+                   word.length <= 12 &&
+                   !/^\d+$/.test(word); // 排除纯数字
+        });
+        
+        console.log(`Final filtered words (${filtered.length}): ${filtered.slice(0, 20).join(', ')}`);
+        
+        return filtered.slice(0, 20); // 返回前20个单词
     }
     
-    // 否则尝试传统方法
-    console.log('Structured extraction failed, trying traditional method...');
-    
-    const allWords = [];
-    const listItems = html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [];
-    
-    listItems.forEach((item, i) => {
-        const cleanText = item.replace(/<[^>]*>/g, ' ');
-        const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
-        console.log(`List item ${i+1}: ${words.slice(0, 6).join(', ')}`);
-        words.forEach(word => {
-            if (!allWords.includes(word)) {
-                allWords.push(word);
-            }
-        });
-    });
-    
-    // 过滤掉常见的非游戏单词
-    const excludeWords = [
-        'MASHABLE', 'CONNECTIONS', 'NYT', 'PUZZLE', 'ANSWER', 'HINT', 'TODAY',
-        'DAILY', 'GAME', 'ARTICLE', 'CONTENT', 'SEARCH', 'RESULT', 'NEWS',
-        'TECH', 'SCIENCE', 'SOCIAL', 'MEDIA', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE',
-        'SEPTEMBER', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY',
-        'STRONG', 'FIRST', 'ONES', 'FAMOUS', 'WHAT', 'MIGHT', 'REFER'
-    ];
-    
-    const filtered = allWords.filter(word => {
-        return !excludeWords.includes(word) && 
-               word.length >= 3 && 
-               word.length <= 12 &&
-               !/^\d+$/.test(word); // 排除纯数字
-    });
-    
-    console.log(`Final filtered words (${filtered.length}): ${filtered.slice(0, 20).join(', ')}`);
-    
-    return filtered.slice(0, 20); // 返回前20个单词
+    return groupedWords;
 }
 
 // 旧的提取函数（保留作为备用）
