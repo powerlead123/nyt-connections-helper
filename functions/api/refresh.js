@@ -93,9 +93,20 @@ async function forceFetchFreshData() {
             `https://mashable.com/article/nyt-connections-hint-answer-today-${monthName}-${day}-${year}`
         ];
         
-        // 使用可靠的代理服务
-        const proxyServices = [
-            (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+        // 直接访问，不使用代理
+        const accessMethods = [
+            async (url) => {
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Cache-Control': 'no-cache'
+                    },
+                    signal: AbortSignal.timeout(15000)
+                });
+                return response.ok ? await response.text() : null;
+            }
         ];
         
         for (const baseUrl of urls) {
@@ -293,122 +304,145 @@ function parseForceRefresh(html, dateStr) {
     }
 }
 
-// 智能提取Connections单词 - 基于实际HTML结构
+// 正确的Connections解析器 - 基于实际Mashable格式
 function extractConnectionsWords(html) {
-    console.log('Extracting Connections words from structured content...');
+    console.log('Starting correct Connections parsing based on Mashable format...');
     
-    // 首先查找答案部分
-    const answerSectionMatch = html.match(/What is the answer to Connections today[\s\S]{0,2000}/i);
+    // 第一步：找到"What is the answer to Connections today"区域
+    const answerSectionMatch = html.match(/What is the answer to Connections today[\s\S]{0,3000}/i);
     
     if (!answerSectionMatch) {
-        console.log('Answer section not found, trying alternative methods...');
+        console.log('Answer section not found');
         return extractFallbackWords(html);
     }
     
     const answerSection = answerSectionMatch[0];
     console.log('Found answer section, length:', answerSection.length);
     
-    // 清理HTML标签，保留文本内容
-    const cleanSection = answerSection
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[\s\S]*?<\/style>/gi, '')
-        .replace(/<!--[\s\S]*?-->/g, '')
+    // 第二步：查找所有bullet point列表项
+    // 格式：• [分组名称]: [单词1], [单词2], [单词3], [单词4]
+    const bulletPattern = /•\s*([^:]+):\s*([^•]+?)(?=•|$)/g;
+    const matches = [...answerSection.matchAll(bulletPattern)];
+    
+    console.log(`Found ${matches.length} bullet point groups`);
+    
+    if (matches.length < 4) {
+        console.log('Not enough groups found, trying alternative patterns...');
+        return tryAlternativePatterns(answerSection);
+    }
+    
+    const groups = [];
+    
+    for (let i = 0; i < Math.min(4, matches.length); i++) {
+        const groupName = matches[i][1].trim();
+        const wordsText = matches[i][2].trim();
+        
+        console.log(`Group ${i + 1}: ${groupName} -> ${wordsText}`);
+        
+        // 按逗号分割单词，保留空格和特殊字符
+        const words = wordsText.split(',').map(word => word.trim()).filter(word => word.length > 0);
+        
+        if (words.length >= 4) {
+            groups.push({
+                category: groupName,
+                words: words.slice(0, 4) // 只取前4个单词
+            });
+        } else {
+            console.log(`Warning: Group "${groupName}" only has ${words.length} words`);
+        }
+    }
+    
+    if (groups.length === 4) {
+        console.log('✅ Successfully extracted 4 groups with bullet point method');
+        return groups;
+    }
+    
+    console.log('Bullet point method failed, using fallback...');
+    return extractFallbackWords(html);
+}
+
+// 尝试替代解析模式
+function tryAlternativePatterns(answerSection) {
+    console.log('Trying alternative parsing patterns...');
+    
+    // 清理HTML标签
+    const cleanText = answerSection
         .replace(/<[^>]*>/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     
-    console.log('Cleaned section preview:', cleanSection.substring(0, 300));
+    console.log('Clean text preview:', cleanText.substring(0, 300));
     
-    // 通用方法：查找颜色分组
-    console.log('Using universal color-based parsing...');
+    // 模式1: 查找列表项（可能是<li>标签）
+    const listItems = answerSection.match(/<li[^>]*>([^<]*(?:<[^>]*>[^<]*)*)<\/li>/gi) || [];
     
-    // 查找颜色提示模式
-    const colorHints = {};
-    const colorPatterns = [
-        /Yellow[:\s]*<strong[^>]*>([^<]+)<\/strong>/i,
-        /Green[:\s]*<strong[^>]*>([^<]+)<\/strong>/i,
-        /Blue[:\s]*<strong[^>]*>([^<]+)<\/strong>/i,
-        /Purple[:\s]*<strong[^>]*>([^<]+)<\/strong>/i
-    ];
-    
-    const colors = ['Yellow', 'Green', 'Blue', 'Purple'];
-    colorPatterns.forEach((pattern, i) => {
-        const match = answerSection.match(pattern);
-        if (match) {
-            colorHints[colors[i]] = match[1].trim();
-            console.log(`Found ${colors[i]} hint: ${match[1].trim()}`);
-        }
-    });
-    
-    // 如果找到颜色提示，尝试提取对应的单词
-    if (Object.keys(colorHints).length >= 4) {
-        console.log('Found all 4 color hints, extracting words...');
+    if (listItems.length >= 4) {
+        console.log(`Found ${listItems.length} list items`);
         
-        // 查找答案单词的多种模式
-        const wordPatterns = [
-            // 模式1: 逗号分隔的大写单词组
-            /([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*)/g,
-            // 模式2: 列表项中的单词
-            /<li[^>]*>([A-Z][A-Z\-\d\s]*)<\/li>/gi,
-            // 模式3: 强调标签中的单词
-            /<(?:strong|b)[^>]*>([A-Z][A-Z\-\d\s]+)<\/(?:strong|b)>/gi
-        ];
-        
-        const extractedGroups = [];
-        
-        for (const pattern of wordPatterns) {
-            const matches = [...answerSection.matchAll(pattern)];
-            console.log(`Pattern found ${matches.length} matches`);
+        const groups = [];
+        for (const item of listItems.slice(0, 4)) {
+            const cleanItem = item.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
             
-            if (matches.length >= 4) {
-                // 如果是4个单词一组的模式
-                if (pattern.source.includes('([A-Z][A-Z\\-\\d]*),')) {
-                    matches.forEach((match, index) => {
-                        if (index < 4) {
-                            const words = [match[1], match[2], match[3], match[4]];
-                            extractedGroups.push({
-                                category: colors[index] || `Group ${index + 1}`,
-                                words: words.filter(w => w && w.length > 0)
-                            });
-                        }
-                    });
-                } else {
-                    // 单个单词的模式，需要分组
-                    const allWords = matches.map(m => m[1].trim().toUpperCase()).filter(w => w.length > 0);
-                    
-                    // 过滤掉网站相关词汇
-                    const filteredWords = allWords.filter(word => {
-                        const exclude = ['NYT', 'CONNECTIONS', 'MASHABLE', 'TODAY', 'ANSWER', 'PUZZLE', 'HINT', 'GAME'];
-                        return !exclude.includes(word) && word.length >= 3 && word.length <= 12;
-                    });
-                    
-                    console.log('Filtered words:', filteredWords.slice(0, 16));
-                    
-                    if (filteredWords.length >= 16) {
-                        for (let i = 0; i < 4; i++) {
-                            const groupWords = filteredWords.slice(i * 4, (i + 1) * 4);
-                            if (groupWords.length === 4) {
-                                extractedGroups.push({
-                                    category: colors[i] || `Group ${i + 1}`,
-                                    words: groupWords
-                                });
-                            }
-                        }
-                    }
-                }
+            // 查找冒号分割的格式
+            const colonMatch = cleanItem.match(/^([^:]+):\s*(.+)$/);
+            if (colonMatch) {
+                const groupName = colonMatch[1].trim();
+                const wordsText = colonMatch[2].trim();
+                const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
                 
-                if (extractedGroups.length >= 4) {
-                    console.log('Successfully extracted 4 groups');
-                    return extractedGroups.slice(0, 4);
+                if (words.length >= 4) {
+                    groups.push({
+                        category: groupName,
+                        words: words.slice(0, 4)
+                    });
                 }
             }
         }
+        
+        if (groups.length >= 4) {
+            console.log('✅ Successfully parsed with list items method');
+            return groups.slice(0, 4);
+        }
     }
     
-    // 如果颜色方法失败，尝试通用文本解析
-    console.log('Color method failed, trying generic text parsing...');
-    return extractGenericAnswers(cleanSection);
+    // 模式2: 直接在文本中查找冒号分割的行
+    const lines = cleanText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    const groups = [];
+    for (const line of lines) {
+        const colonMatch = line.match(/^([^:]+):\s*(.+)$/);
+        if (colonMatch) {
+            const groupName = colonMatch[1].trim();
+            const wordsText = colonMatch[2].trim();
+            
+            // 检查是否包含逗号分隔的单词
+            if (wordsText.includes(',')) {
+                const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
+                
+                if (words.length >= 4) {
+                    groups.push({
+                        category: groupName,
+                        words: words.slice(0, 4)
+                    });
+                    
+                    console.log(`Found group: ${groupName} - ${words.slice(0, 4).join(', ')}`);
+                }
+            }
+        }
+        
+        if (groups.length >= 4) break;
+    }
+    
+    if (groups.length >= 4) {
+        console.log('✅ Successfully parsed with line-by-line method');
+        return groups.slice(0, 4);
+    }
+    
+    console.log('All alternative patterns failed');
+    return null;
 }
+
+
 
 // 解析Connections内容的核心函数
 function parseConnectionsContent(content) {

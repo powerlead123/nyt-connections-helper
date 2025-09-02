@@ -833,26 +833,60 @@ function parseConnectionsFromHTML(html, dateStr) {
     }
 }
 
-// 通用Connections解析器 - 真正智能的提取
+// 正确的Connections解析器 - 基于实际Mashable格式
 function extractConnectionsWords(html) {
-    console.log('Starting universal Connections parsing...');
+    console.log('Starting correct Connections parsing based on Mashable format...');
     
-    // 第一步：找到所有可能包含答案的区域
-    const answerRegions = findAnswerRegions(html);
-    console.log(`Found ${answerRegions.length} potential answer regions`);
+    // 第一步：找到"What is the answer to Connections today"区域
+    const answerSectionMatch = html.match(/What is the answer to Connections today[\s\S]{0,3000}/i);
     
-    // 第二步：尝试解析每个区域
-    for (let i = 0; i < answerRegions.length; i++) {
-        console.log(`Trying to parse region ${i + 1}...`);
-        const result = parseAnswerRegion(answerRegions[i]);
+    if (!answerSectionMatch) {
+        console.log('Answer section not found');
+        return extractFallbackWords(html);
+    }
+    
+    const answerSection = answerSectionMatch[0];
+    console.log('Found answer section, length:', answerSection.length);
+    
+    // 第二步：查找所有bullet point列表项
+    // 格式：• [分组名称]: [单词1], [单词2], [单词3], [单词4]
+    const bulletPattern = /•\s*([^:]+):\s*([^•]+?)(?=•|$)/g;
+    const matches = [...answerSection.matchAll(bulletPattern)];
+    
+    console.log(`Found ${matches.length} bullet point groups`);
+    
+    if (matches.length < 4) {
+        console.log('Not enough groups found, trying alternative patterns...');
+        return tryAlternativePatterns(answerSection);
+    }
+    
+    const groups = [];
+    
+    for (let i = 0; i < Math.min(4, matches.length); i++) {
+        const groupName = matches[i][1].trim();
+        const wordsText = matches[i][2].trim();
         
-        if (result && result.length === 4) {
-            console.log('✅ Successfully parsed 4 groups!');
-            return result;
+        console.log(`Group ${i + 1}: ${groupName} -> ${wordsText}`);
+        
+        // 按逗号分割单词，保留空格和特殊字符
+        const words = wordsText.split(',').map(word => word.trim()).filter(word => word.length > 0);
+        
+        if (words.length >= 4) {
+            groups.push({
+                category: groupName,
+                words: words.slice(0, 4) // 只取前4个单词
+            });
+        } else {
+            console.log(`Warning: Group "${groupName}" only has ${words.length} words`);
         }
     }
     
-    console.log('All regions failed, using fallback...');
+    if (groups.length === 4) {
+        console.log('✅ Successfully extracted 4 groups with bullet point method');
+        return groups;
+    }
+    
+    console.log('Bullet point method failed, using fallback...');
     return extractFallbackWords(html);
 }
 
@@ -1020,6 +1054,87 @@ function extractCommaGroups(text) {
         }));
     }
     
+    return null;
+}
+
+// 尝试替代解析模式
+function tryAlternativePatterns(answerSection) {
+    console.log('Trying alternative parsing patterns...');
+    
+    // 清理HTML标签
+    const cleanText = answerSection
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    
+    console.log('Clean text preview:', cleanText.substring(0, 300));
+    
+    // 模式1: 查找列表项（可能是<li>标签）
+    const listItems = answerSection.match(/<li[^>]*>([^<]*(?:<[^>]*>[^<]*)*)<\/li>/gi) || [];
+    
+    if (listItems.length >= 4) {
+        console.log(`Found ${listItems.length} list items`);
+        
+        const groups = [];
+        for (const item of listItems.slice(0, 4)) {
+            const cleanItem = item.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            
+            // 查找冒号分割的格式
+            const colonMatch = cleanItem.match(/^([^:]+):\s*(.+)$/);
+            if (colonMatch) {
+                const groupName = colonMatch[1].trim();
+                const wordsText = colonMatch[2].trim();
+                const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
+                
+                if (words.length >= 4) {
+                    groups.push({
+                        category: groupName,
+                        words: words.slice(0, 4)
+                    });
+                }
+            }
+        }
+        
+        if (groups.length >= 4) {
+            console.log('✅ Successfully parsed with list items method');
+            return groups.slice(0, 4);
+        }
+    }
+    
+    // 模式2: 直接在文本中查找冒号分割的行
+    const lines = cleanText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    const groups = [];
+    for (const line of lines) {
+        const colonMatch = line.match(/^([^:]+):\s*(.+)$/);
+        if (colonMatch) {
+            const groupName = colonMatch[1].trim();
+            const wordsText = colonMatch[2].trim();
+            
+            // 检查是否包含逗号分隔的单词
+            if (wordsText.includes(',')) {
+                const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
+                
+                if (words.length >= 4) {
+                    groups.push({
+                        category: groupName,
+                        words: words.slice(0, 4)
+                    });
+                    
+                    console.log(`Found group: ${groupName} - ${words.slice(0, 4).join(', ')}`);
+                }
+            }
+        }
+        
+        if (groups.length >= 4) break;
+    }
+    
+    if (groups.length >= 4) {
+        console.log('✅ Successfully parsed with line-by-line method');
+        return groups.slice(0, 4);
+    }
+    
+    console.log('All alternative patterns failed');
     return null;
 }
 
