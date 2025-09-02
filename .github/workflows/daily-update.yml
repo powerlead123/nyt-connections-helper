@@ -16,6 +16,6 @@ jobs:
     steps:
       - name: Trigger Daily Update
         run: |
-          curl -X POST https://connections-helper-chinese.pages.dev/scheduled \
+          curl -X POST https://nyt-connections-helper.pages.dev/scheduled \
             -H "Content-Type: application/json" \
             -d '{"action":"daily-update","secret":"${{ secrets.CRON_SECRET }}"}'
