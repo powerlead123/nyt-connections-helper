@@ -83,41 +83,7 @@ async function forceFetchFreshData() {
         
         console.log(`Force fetching for: ${dateStr}`);
         
-        // 直接返回正确的9月2日数据
-        if (dateStr === '2025-09-02') {
-            console.log('Returning correct September 2nd data');
-            return {
-                date: dateStr,
-                words: ['CURIOUS', 'FUNNY', 'OFF', 'WEIRD', 'JOB', 'POSITION', 'POST', 'STATION', 'COIN', 'COMIC', 'RECORD', 'STAMP', 'LETTER', 'MAIL', 'REACTION', 'STORE'],
-                groups: [
-                    {
-                        theme: 'PECULIAR',
-                        words: ['CURIOUS', 'FUNNY', 'OFF', 'WEIRD'],
-                        difficulty: 'yellow',
-                        hint: 'These words all mean strange or unusual'
-                    },
-                    {
-                        theme: 'ASSIGNMENT',
-                        words: ['JOB', 'POSITION', 'POST', 'STATION'],
-                        difficulty: 'green',
-                        hint: 'These words all refer to a role or task'
-                    },
-                    {
-                        theme: 'CLASSIC COLLECTION ITEMS',
-                        words: ['COIN', 'COMIC', 'RECORD', 'STAMP'],
-                        difficulty: 'blue',
-                        hint: 'Things people traditionally collect'
-                    },
-                    {
-                        theme: 'CHAIN ___',
-                        words: ['LETTER', 'MAIL', 'REACTION', 'STORE'],
-                        difficulty: 'purple',
-                        hint: 'Words that can follow "CHAIN"'
-                    }
-                ],
-                source: 'Manual Refresh - September 2nd'
-            };
-        }
+        // 使用真实的解析逻辑，不再硬编码
         
         const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
                            'july', 'august', 'september', 'october', 'november', 'december'];

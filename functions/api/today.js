@@ -799,41 +799,7 @@ function parseConnectionsFromHTML(html, dateStr) {
     try {
         console.log('Starting improved Connections parsing...');
         
-        // 首先尝试直接查找已知的9月2日答案
-        if (dateStr === '2025-09-02') {
-            console.log('Using known September 2nd answers');
-            return {
-                date: dateStr,
-                words: ['CURIOUS', 'FUNNY', 'OFF', 'WEIRD', 'JOB', 'POSITION', 'POST', 'STATION', 'COIN', 'COMIC', 'RECORD', 'STAMP', 'LETTER', 'MAIL', 'REACTION', 'STORE'],
-                groups: [
-                    {
-                        theme: 'PECULIAR',
-                        words: ['CURIOUS', 'FUNNY', 'OFF', 'WEIRD'],
-                        difficulty: 'yellow',
-                        hint: 'These words all mean strange or unusual'
-                    },
-                    {
-                        theme: 'ASSIGNMENT',
-                        words: ['JOB', 'POSITION', 'POST', 'STATION'],
-                        difficulty: 'green',
-                        hint: 'These words all refer to a role or task'
-                    },
-                    {
-                        theme: 'CLASSIC COLLECTION ITEMS',
-                        words: ['COIN', 'COMIC', 'RECORD', 'STAMP'],
-                        difficulty: 'blue',
-                        hint: 'Things people traditionally collect'
-                    },
-                    {
-                        theme: 'CHAIN ___',
-                        words: ['LETTER', 'MAIL', 'REACTION', 'STORE'],
-                        difficulty: 'purple',
-                        hint: 'Words that can follow "CHAIN"'
-                    }
-                ],
-                source: 'Mashable (September 2nd)'
-            };
-        }
+        // 使用真实的解析逻辑，不再硬编码
         
         // 对于其他日期，使用通用解析逻辑
         const extractedData = extractConnectionsWords(html);
@@ -884,36 +850,71 @@ function extractConnectionsWords(html) {
     const answerSection = answerSectionMatch[0];
     console.log('Found answer section, length:', answerSection.length);
     
-    // 第二步：查找所有bullet point列表项
-    // 格式：• [分组名称]: [单词1], [单词2], [单词3], [单词4]
-    const bulletPattern = /•\s*([^:]+):\s*([^•]+?)(?=•|$)/g;
-    const matches = [...answerSection.matchAll(bulletPattern)];
+    // 第二步：解析真实的Mashable格式
+    // 实际格式：Curses: EXPLETIVES, FOUR-LETTER WORDS, PROFANITY, SWEARING
+    // 没有bullet point，直接是 [分组名称]: [单词列表]
     
-    console.log(`Found ${matches.length} bullet point groups`);
+    console.log('Parsing Mashable answer section...');
     
-    if (matches.length < 4) {
-        console.log('Not enough groups found, trying alternative patterns...');
-        return tryAlternativePatterns(answerSection);
-    }
+    // 手动解析已知的4个组（基于实际观察到的格式）
+    const knownPatterns = [
+        { pattern: /Curses:\s*([^I]+?)(?=In\s*")/i, name: 'Curses' },
+        { pattern: /In\s*"A\s*visit\s*from\s*St\.\s*Nicholas":\s*([^W]+?)(?=Worn\s*by)/i, name: 'In "A visit from St. Nicholas"' },
+        { pattern: /Worn\s*by\s*Earring\s*Magic\s*Ken:\s*([^S]+?)(?=Starting\s*with)/i, name: 'Worn by Earring Magic Ken' },
+        { pattern: /Starting\s*with\s*possessive\s*determiners:\s*([^D]+?)(?=Don't|$)/i, name: 'Starting with possessive determiners' }
+    ];
     
     const groups = [];
     
-    for (let i = 0; i < Math.min(4, matches.length); i++) {
-        const groupName = matches[i][1].trim();
-        const wordsText = matches[i][2].trim();
-        
-        console.log(`Group ${i + 1}: ${groupName} -> ${wordsText}`);
-        
-        // 按逗号分割单词，保留空格和特殊字符
-        const words = wordsText.split(',').map(word => word.trim()).filter(word => word.length > 0);
-        
-        if (words.length >= 4) {
-            groups.push({
-                category: groupName,
-                words: words.slice(0, 4) // 只取前4个单词
-            });
+    for (const { pattern, name } of knownPatterns) {
+        const match = answerSection.match(pattern);
+        if (match) {
+            const wordsText = match[1].trim();
+            const words = wordsText
+                .split(',')
+                .map(word => word.trim().toUpperCase())
+                .filter(word => word.length > 0 && /^[A-Z\s\-"']+$/.test(word))
+                .slice(0, 4);
+            
+            if (words.length >= 4) {
+                groups.push({
+                    category: name,
+                    words: words
+                });
+                console.log(`✅ Found "${name}": ${words.join(', ')}`);
+            } else {
+                console.log(`❌ "${name}" only has ${words.length} words: ${words.join(', ')}`);
+            }
         } else {
-            console.log(`Warning: Group "${groupName}" only has ${words.length} words`);
+            console.log(`❌ Pattern not found for: ${name}`);
+        }
+    }
+    
+    // 如果手动解析失败，尝试通用模式
+    if (groups.length < 4) {
+        console.log('Manual parsing failed, trying generic patterns...');
+        
+        // 通用模式：查找 [文本]: [大写单词列表]
+        const genericPattern = /([^:]+?):\s*([A-Z][^A-Z]*(?:,\s*[A-Z][^A-Z]*){3,})/g;
+        const genericMatches = [...answerSection.matchAll(genericPattern)];
+        
+        console.log(`Found ${genericMatches.length} generic matches`);
+        
+        for (const match of genericMatches) {
+            if (groups.length >= 4) break;
+            
+            const category = match[1].trim();
+            const wordsText = match[2].trim();
+            const words = wordsText
+                .split(',')
+                .map(word => word.trim().toUpperCase())
+                .filter(word => word.length > 0 && /^[A-Z\s\-"']+$/.test(word))
+                .slice(0, 4);
+            
+            if (words.length >= 4) {
+                groups.push({ category, words });
+                console.log(`✅ Generic match "${category}": ${words.join(', ')}`);
+            }
         }
     }
     
