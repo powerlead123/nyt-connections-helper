@@ -191,32 +191,63 @@ function parseForceRefresh(html, dateStr) {
             console.log('Extracted hints:', hints);
             
             // 提取单词 - 使用更智能的方法
-            const words = extractConnectionsWords(html);
-            console.log(`Extracted ${words.length} words:`, words.slice(0, 16));
+            const extractedData = extractConnectionsWords(html);
+            console.log(`Extracted data:`, extractedData);
             
-            if (words.length >= 16) {
+            // 如果是分组数据
+            if (Array.isArray(extractedData) && extractedData.length === 4 && extractedData[0].category) {
+                console.log('Using structured group data');
+                
+                const colorMap = {
+                    'First appearance': 'yellow',
+                    'Ones celebrated with holidays': 'green', 
+                    'Famous poets': 'blue',
+                    'What "Cardinal" might refer to': 'purple'
+                };
+                
+                const groups = extractedData.map((group, index) => {
+                    const difficulty = colorMap[group.category] || ['yellow', 'green', 'blue', 'purple'][index];
+                    return {
+                        theme: group.category,
+                        words: group.words,
+                        difficulty: difficulty,
+                        hint: group.category
+                    };
+                });
+                
+                return {
+                    date: dateStr,
+                    words: groups.flatMap(g => g.words),
+                    groups: groups,
+                    source: 'Mashable (Manual Refresh - Structured)'
+                };
+            }
+            // 如果是单词数组（传统方法）
+            else if (Array.isArray(extractedData) && extractedData.length >= 16) {
+                console.log('Using traditional word array');
+                
                 const groups = [
                     {
                         theme: hints.Yellow || 'Yellow Group',
-                        words: words.slice(0, 4),
+                        words: extractedData.slice(0, 4),
                         difficulty: 'yellow',
                         hint: hints.Yellow || 'These words share a theme'
                     },
                     {
                         theme: hints.Green || 'Green Group',
-                        words: words.slice(4, 8),
+                        words: extractedData.slice(4, 8),
                         difficulty: 'green',
                         hint: hints.Green || 'These words share a theme'
                     },
                     {
                         theme: hints.Blue || 'Blue Group',
-                        words: words.slice(8, 12),
+                        words: extractedData.slice(8, 12),
                         difficulty: 'blue',
                         hint: hints.Blue || 'These words share a theme'
                     },
                     {
                         theme: hints.Purple || 'Purple Group',
-                        words: words.slice(12, 16),
+                        words: extractedData.slice(12, 16),
                         difficulty: 'purple',
                         hint: hints.Purple || 'These words share a theme'
                     }
@@ -272,53 +303,57 @@ function extractConnectionsWords(html) {
     
     console.log(`Found ${answerMatches.length} structured answer groups`);
     
-    const allWords = [];
+    const groupedWords = [];
     
-    // 从结构化答案中提取
+    // 从结构化答案中提取，保持分组
     answerMatches.forEach((match, i) => {
         const category = match[1].trim();
         const wordsText = match[2].trim();
         
         console.log(`Group ${i+1}: ${category} -> ${wordsText}`);
         
-        // 提取单词，处理复合词如 "SAINT PATRICK"
+        // 提取单词，保持复合词完整
         const words = wordsText.split(',').map(w => w.trim()).filter(w => w.length > 0);
         
+        const cleanWords = [];
         words.forEach(wordPhrase => {
-            // 处理复合词，如 "SAINT PATRICK" -> ["SAINT", "PATRICK"]
-            if (wordPhrase.includes(' ')) {
-                const parts = wordPhrase.split(' ').filter(p => p.length >= 3);
-                parts.forEach(part => {
-                    if (part.match(/^[A-Z]+$/)) {
-                        allWords.push(part);
-                    }
-                });
-            } else if (wordPhrase.match(/^[A-Z]{3,12}$/)) {
-                allWords.push(wordPhrase);
+            // 保持复合词完整，如 "SAINT PATRICK"
+            if (wordPhrase.match(/^[A-Z\s\.]+$/)) {
+                cleanWords.push(wordPhrase);
+            }
+        });
+        
+        if (cleanWords.length > 0) {
+            groupedWords.push({
+                category: category,
+                words: cleanWords
+            });
+        }
+    });
+    
+    console.log(`Extracted ${groupedWords.length} groups:`, groupedWords);
+    
+    // 如果结构化提取成功，返回分组数据
+    if (groupedWords.length === 4) {
+        return groupedWords;
+    }
+    
+    // 否则尝试传统方法
+    console.log('Structured extraction failed, trying traditional method...');
+    
+    const allWords = [];
+    const listItems = html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [];
+    
+    listItems.forEach((item, i) => {
+        const cleanText = item.replace(/<[^>]*>/g, ' ');
+        const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
+        console.log(`List item ${i+1}: ${words.slice(0, 6).join(', ')}`);
+        words.forEach(word => {
+            if (!allWords.includes(word)) {
+                allWords.push(word);
             }
         });
     });
-    
-    console.log(`Extracted ${allWords.length} words from structured content: ${allWords.join(', ')}`);
-    
-    // 如果结构化提取不够，尝试其他方法
-    if (allWords.length < 16) {
-        console.log('Not enough structured words, trying alternative extraction...');
-        
-        // 查找列表项中的单词
-        const listItems = html.match(/<li[^>]*>[\s\S]*?<\/li>/gi) || [];
-        
-        listItems.forEach((item, i) => {
-            const cleanText = item.replace(/<[^>]*>/g, ' ');
-            const words = cleanText.match(/\b[A-Z]{3,12}\b/g) || [];
-            console.log(`List item ${i+1}: ${words.slice(0, 6).join(', ')}`);
-            words.forEach(word => {
-                if (!allWords.includes(word)) {
-                    allWords.push(word);
-                }
-            });
-        });
-    }
     
     // 过滤掉常见的非游戏单词
     const excludeWords = [
