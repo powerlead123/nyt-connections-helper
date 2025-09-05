@@ -38,7 +38,21 @@ export async function onRequest(context) {
         
         // 获取该日期的谜题数据
         let puzzleData = null;
-        if (env.CONNECTIONS_KV) {
+        
+        // 如果是今天的日期，优先使用today API的数据
+        const today = new Date().toISOString().split('T')[0];
+        if (date === today) {
+            try {
+                // 直接调用today API逻辑获取最新数据
+                puzzleData = await fetchTodayPuzzleData();
+                console.log('Using fresh today API data for article generation');
+            } catch (error) {
+                console.log('Failed to fetch today API data, falling back to KV storage');
+            }
+        }
+        
+        // 如果没有获取到今日数据，尝试从KV存储获取
+        if (!puzzleData && env.CONNECTIONS_KV) {
             puzzleData = await env.CONNECTIONS_KV.get(`puzzle-${date}`, 'json');
         }
         
@@ -103,6 +117,116 @@ export async function onRequest(context) {
                 'Access-Control-Allow-Origin': '*'
             }
         });
+    }
+}
+
+// 获取今日谜题数据（与today.js相同的逻辑）
+async function fetchTodayPuzzleData() {
+    try {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+        const day = today.getDate();
+        
+        const url = `https://mashable.com/article/nyt-connections-hint-answer-today-${month}-${day}-${year}`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        
+        const html = await response.text();
+        
+        // 提取提示区域的分组名称
+        const hints = [];
+        const correctHintMatch = html.match(/Today's connections fall into the following categories:(.*?)(?=Looking|Ready|$)/i);
+        
+        if (correctHintMatch) {
+            const hintText = correctHintMatch[1];
+            const correctPatterns = [
+                /Yellow:\s*(.*?)Green:/i,
+                /Green:\s*(.*?)Blue:/i,  
+                /Blue:\s*(.*?)Purple:/i,
+                /Purple:\s*(.*?)(?:Looking|Ready|$)/i
+            ];
+            
+            for (const pattern of correctPatterns) {
+                const match = hintText.match(pattern);
+                if (match) {
+                    hints.push(match[1].trim());
+                }
+            }
+        }
+        
+        if (hints.length < 4) {
+            throw new Error('无法提取完整的分组名称');
+        }
+        
+        // 提取答案区域
+        const startMarker = 'What is the answer to Connections today';
+        const endMarker = "Don't feel down if you didn't manage to guess it this time";
+        
+        const startIndex = html.indexOf(startMarker);
+        const endIndex = html.indexOf(endMarker, startIndex);
+        
+        if (startIndex === -1 || endIndex === -1) {
+            throw new Error('无法找到答案区域');
+        }
+        
+        const answerSection = html.substring(startIndex, endIndex);
+        
+        // 提取单词
+        const wordPattern = /\b[A-Z][A-Z\-0-9]*\b/g;
+        const allWords = [...answerSection.matchAll(wordPattern)]
+            .map(match => match[0])
+            .filter(word => word.length >= 3 && word.length <= 12)
+            .filter((word, index, arr) => arr.indexOf(word) === index);
+        
+        if (allWords.length < 16) {
+            throw new Error('提取的单词数量不足');
+        }
+        
+        // 构造分组数据
+        const groups = [
+            {
+                theme: hints[0],
+                words: allWords.slice(0, 4),
+                difficulty: 'yellow',
+                hint: hints[0]
+            },
+            {
+                theme: hints[1], 
+                words: allWords.slice(4, 8),
+                difficulty: 'green',
+                hint: hints[1]
+            },
+            {
+                theme: hints[2],
+                words: allWords.slice(8, 12),
+                difficulty: 'blue', 
+                hint: hints[2]
+            },
+            {
+                theme: hints[3],
+                words: allWords.slice(12, 16),
+                difficulty: 'purple',
+                hint: hints[3]
+            }
+        ];
+        
+        const dateStr = today.toISOString().split('T')[0];
+        
+        return {
+            date: dateStr,
+            words: allWords.slice(0, 16),
+            groups: groups,
+            source: 'Mashable (Article API)'
+        };
+        
+    } catch (error) {
+        console.error('Today puzzle fetch error:', error);
+        return null;
     }
 }
 
