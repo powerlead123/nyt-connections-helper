@@ -120,7 +120,7 @@ function updatePuzzleDateDisplay() {
         // Update the article link
         const articleLink = document.getElementById('todayArticleLink');
         if (articleLink) {
-            articleLink.href = `/connections-${todaysPuzzle.date}`;
+            articleLink.href = `/api/article/${todaysPuzzle.date}`;
         }
     } else {
         puzzleDateElement.textContent = 'Date unavailable';
@@ -643,7 +643,7 @@ function setTodayArticleLink() {
     const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
     const articleLink = document.getElementById('todayArticleLink');
     if (articleLink) {
-        articleLink.href = `/connections-${dateStr}`;
+        articleLink.href = `/api/article/${dateStr}`;
     }
 }
 
