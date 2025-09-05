@@ -95,9 +95,13 @@ export async function onRequest(context) {
             throw new Error('解析的分组数量不足');
         }
         
+        const finalGroups = groups.slice(0, 4);
+        const allWords = finalGroups.flatMap(group => group.words);
+        
         return new Response(JSON.stringify({
             date: today.toISOString().split('T')[0],
-            groups: groups.slice(0, 4)
+            words: allWords,
+            groups: finalGroups
         }), {
             headers: {
                 'Content-Type': 'application/json',
@@ -111,6 +115,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({
             date: today.toISOString().split('T')[0],
             error: '无法获取今日谜题，请稍后重试',
+            words: [],
             groups: []
         }), {
             headers: {
