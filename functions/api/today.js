@@ -86,6 +86,7 @@ export async function onRequest(context) {
                 
                 if (words.length >= 4) {
                     groups.push({
+                        theme: currentHint,
                         category: currentHint,
                         words: words
                     });
