@@ -58,6 +58,7 @@ export async function onRequest(context) {
         
         // 基于提示名称解析分组
         const groups = [];
+        const difficulties = ['yellow', 'green', 'blue', 'purple']; // 按顺序对应难度
         
         for (let i = 0; i < hints.length; i++) {
             const currentHint = hints[i];
@@ -88,7 +89,9 @@ export async function onRequest(context) {
                     groups.push({
                         theme: currentHint,
                         category: currentHint,
-                        words: words
+                        words: words,
+                        difficulty: difficulties[i], // 添加难度字段
+                        hint: `These words are related to "${currentHint}"`
                     });
                 }
             }
