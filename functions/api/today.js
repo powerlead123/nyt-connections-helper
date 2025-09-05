@@ -63,8 +63,10 @@ export async function onRequest(context) {
             const currentHint = hints[i];
             const nextHint = i < hints.length - 1 ? hints[i + 1] : null;
             
-            // 转义正则表达式特殊字符
-            const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // 转义正则表达式特殊字符的函数
+            function escapeRegex(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
             
             let pattern;
             if (nextHint) {
