@@ -1,115 +1,106 @@
-// 检查部署状态和代码是否生效
+// 检查部署状态和修复是否生效
 async function checkDeploymentStatus() {
-    console.log('🔍 检查部署状态...');
+    console.log('🔍 检查部署状态和修复是否生效');
+    console.log('时间:', new Date().toLocaleString());
+    console.log('=' .repeat(50));
     
     try {
-        // 1. 测试新的fetchFromTodayAPI函数是否存在
-        console.log('\n1️⃣ 测试scheduled端点的新逻辑');
-        console.log('='.repeat(40));
+        console.log('\n1. 📡 测试refresh API基本响应...');
         
-        // 触发完整的每日更新，看看日志
-        const updateResponse = await fetch('https://nyt-connections-helper.pages.dev/scheduled', {
+        const response = await fetch('https://nyt-connections-helper.pages.dev/api/refresh', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'daily-update', secret: 'your-secret-key-here' })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            signal: AbortSignal.timeout(15000)
         });
         
-        console.log(`更新状态: ${updateResponse.status}`);
+        console.log('状态码:', response.status);
+        console.log('响应OK:', response.ok);
         
-        if (updateResponse.ok) {
-            const result = await updateResponse.json();
-            console.log('更新结果:', JSON.stringify(result, null, 2));
+        if (response.ok) {
+            const result = await response.json();
+            console.log('响应结构:', {
+                success: result.success,
+                message: result.message?.substring(0, 50) + '...',
+                hasData: !!result.data,
+                timestamp: result.timestamp
+            });
             
-            // 检查数据来源
-            if (result.result?.scrape?.source) {
-                console.log(`数据来源: ${result.result.scrape.source}`);
-                
-                if (result.result.scrape.source === 'Backup') {
-                    console.log('⚠️ 仍在使用备用数据，新逻辑可能未生效');
-                } else if (result.result.scrape.source.includes('Today API')) {
-                    console.log('✅ 新逻辑已生效，使用Today API数据');
-                } else {
-                    console.log(`📊 使用数据源: ${result.result.scrape.source}`);
-                }
+            // 检查是否返回了现有数据
+            if (!result.success && !result.data) {
+                console.log('\n⚠️ 发现问题: API没有返回现有数据');
+                console.log('这表明修复可能还没有完全部署');
+            } else if (result.data) {
+                console.log('\n✅ API返回了数据 (成功或现有数据)');
+                console.log('数据完整性:', {
+                    date: result.data.date,
+                    wordsCount: result.data.words?.length || 0,
+                    groupsCount: result.data.groups?.length || 0
+                });
             }
         }
         
-        // 2. 等待并检查最新文章
-        console.log('\n2️⃣ 检查最新生成的文章');
-        console.log('='.repeat(40));
+        console.log('\n2. 🌐 测试today API作为对比...');
         
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        const todayResponse = await fetch('https://nyt-connections-helper.pages.dev/api/today?t=' + Date.now());
         
-        const today = new Date().toISOString().split('T')[0];
-        const articleResponse = await fetch(`https://nyt-connections-helper.pages.dev/api/article/${today}`);
-        
-        if (articleResponse.ok) {
-            const content = await articleResponse.text();
+        if (todayResponse.ok) {
+            const todayData = await todayResponse.json();
+            console.log('Today API状态: ✅ 正常');
+            console.log('Today数据:', {
+                date: todayData.date,
+                source: todayData.source,
+                wordsCount: todayData.words?.length || 0,
+                groupsCount: todayData.groups?.length || 0
+            });
             
-            // 提取文章中的单词
-            const wordMatches = content.match(/<span class="bg-gray-100[^>]*>([^<]+)<\/span>/g) || [];
-            const articleWords = wordMatches.map(match => match.replace(/<[^>]*>/g, '').trim());
-            
-            console.log(`文章中的单词 (${articleWords.length}个):`);
-            console.log(articleWords.join(', '));
-            
-            // 获取今日API的单词
-            const todayResponse = await fetch('https://nyt-connections-helper.pages.dev/api/today');
-            if (todayResponse.ok) {
-                const todayData = await todayResponse.json();
-                const todayWords = todayData.words || [];
-                
-                console.log(`\n今日API单词 (${todayWords.length}个):`);
-                console.log(todayWords.join(', '));
-                
-                // 检查匹配度
-                const matchingWords = articleWords.filter(word => todayWords.includes(word));
-                const matchPercentage = Math.round((matchingWords.length / Math.max(articleWords.length, todayWords.length)) * 100);
-                
-                console.log(`\n匹配度: ${matchingWords.length}/${Math.max(articleWords.length, todayWords.length)} (${matchPercentage}%)`);
-                
-                if (matchPercentage >= 90) {
-                    console.log('✅ 数据基本匹配，修复成功！');
-                } else if (matchPercentage >= 50) {
-                    console.log('⚠️ 数据部分匹配，可能需要进一步调整');
-                } else {
-                    console.log('❌ 数据不匹配，修复未成功');
-                }
-                
-                if (matchingWords.length > 0) {
-                    console.log(`匹配的单词: ${matchingWords.join(', ')}`);
-                }
+            if (todayData.groups && todayData.groups.length === 4) {
+                console.log('✅ Today API有完整数据，refresh API应该能返回这些数据');
             }
-        }
-        
-        // 3. 检查是否是缓存问题
-        console.log('\n3️⃣ 分析可能的问题');
-        console.log('='.repeat(40));
-        
-        if (articleWords.includes('NET') && articleWords.includes('SNARE')) {
-            console.log('🔍 文章仍包含备用数据单词 (NET, SNARE等)');
-            console.log('可能原因:');
-            console.log('1. 新代码还未部署到Cloudflare Pages');
-            console.log('2. 文章已缓存，KV存储中的数据未更新');
-            console.log('3. fetchFromTodayAPI函数返回null，回退到备用数据');
-            
-            console.log('\n建议解决方案:');
-            console.log('1. 等待更长时间让Cloudflare Pages完成部署');
-            console.log('2. 检查fetchFromTodayAPI函数的错误日志');
-            console.log('3. 手动清除KV存储中的article缓存');
         } else {
-            console.log('✅ 文章不再使用备用数据');
+            console.log('Today API状态: ❌ 失败');
         }
         
-        console.log('\n📊 当前状态总结:');
-        console.log(`- 部署时间: ${new Date().toLocaleString()}`);
-        console.log(`- 文章长度: ${content?.length || 0} 字符`);
-        console.log(`- 数据匹配: ${matchPercentage || 0}%`);
-        console.log(`- 使用备用数据: ${articleWords.includes('NET') ? '是' : '否'}`);
+        console.log('\n3. 📋 部署状态分析...');
+        
+        // 基于响应分析部署状态
+        if (response.ok) {
+            console.log('✅ refresh API端点存在且响应');
+            
+            if (result.success === false && result.message.includes('Failed to fetch fresh data')) {
+                if (result.data) {
+                    console.log('✅ 修复已部署: API正确返回现有数据');
+                    console.log('🎯 功能状态: 正常 (返回现有数据)');
+                } else {
+                    console.log('⚠️ 修复部分部署: API逻辑更新但数据处理有问题');
+                    console.log('🔧 需要检查: KV数据读取逻辑');
+                }
+            } else if (result.success === true) {
+                console.log('🎉 完美: 获取到新数据');
+                console.log('🎯 功能状态: 完全正常');
+            }
+        } else {
+            console.log('❌ refresh API端点问题');
+            console.log('🔧 需要检查: 部署状态或代码错误');
+        }
         
     } catch (error) {
-        console.error('❌ 检查过程出错:', error.message);
+        console.error('❌ 检查失败:', error.message);
+        
+        if (error.message.includes('timeout')) {
+            console.log('⏰ 可能是网络延迟或服务器响应慢');
+        }
     }
 }
 
-checkDeploymentStatus();
+// 运行检查
+console.log('🚀 启动部署状态检查...\n');
+checkDeploymentStatus().then(() => {
+    console.log('\n' + '='.repeat(50));
+    console.log('📝 总结:');
+    console.log('- 如果修复已部署，refresh API应该返回现有数据');
+    console.log('- 如果修复未部署，可能需要等待或手动触发部署');
+    console.log('- 可以在网站上直接测试管理员刷新按钮');
+    console.log('\n检查完成时间:', new Date().toLocaleString());
+});

@@ -114,7 +114,7 @@ async function generateDailyArticle(env) {
             // 存储文章到 KV
             if (env.CONNECTIONS_KV) {
                 await env.CONNECTIONS_KV.put(`article-${today}`, article, {
-                    expirationTtl: 86400 * 7 // 7天过期
+                    expirationTtl: 86400 * 90 // 90天过期 - 更好的SEO效果
                 });
             }
             
@@ -428,99 +428,41 @@ function generateArticleHTML(puzzleData, date) {
 </html>`;
 }
 
-// 从Mashable获取数据
+// 从Mashable获取数据 - 使用完美逻辑
 async function fetchFromMashable() {
     try {
+        console.log('🎯 使用完美抓取逻辑');
+        
         const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
-        const [year, month, day] = dateStr.split('-');
-        
-        // 使用正确的URL格式 (月份名称格式)
-        const monthNames = [
-            'january', 'february', 'march', 'april', 'may', 'june',
-            'july', 'august', 'september', 'october', 'november', 'december'
-        ];
+        const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                           'july', 'august', 'september', 'october', 'november', 'december'];
         const monthName = monthNames[today.getMonth()];
-        const dayNum = today.getDate();
+        const day = today.getDate();
+        const year = today.getFullYear();
         
-        const urls = [
-            `https://mashable.com/article/nyt-connections-hint-answer-today-${monthName}-${dayNum}-${year}`,
-            `https://mashable.com/article/nyt-connections-answer-today-${monthName}-${dayNum}-${year}`,
-            `https://mashable.com/article/connections-hint-answer-today-${monthName}-${dayNum}-${year}`
-        ];
+        const url = `https://mashable.com/article/nyt-connections-hint-answer-today-${monthName}-${day}-${year}`;
+        console.log('1. URL:', url);
         
-        // 尝试使用代理服务
-        const proxyServices = [
-            // 使用allorigins代理
-            (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-            // 使用cors-anywhere代理
-            (url) => `https://cors-anywhere.herokuapp.com/${url}`,
-            // 直接访问
-            (url) => url
-        ];
-
-        for (const baseUrl of urls) {
-            for (const proxyFn of proxyServices) {
-                try {
-                    const url = proxyFn(baseUrl);
-                    console.log(`Trying URL: ${url}`);
-                    
-                    let response;
-                    let html;
-                    
-                    if (url.includes('allorigins.win')) {
-                        // allorigins返回JSON格式
-                        response = await fetch(url, {
-                            method: 'GET',
-                            signal: AbortSignal.timeout(15000)
-                        });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            html = data.contents;
-                        }
-                    } else {
-                        // 直接请求或cors-anywhere
-                        const headers = {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                            'Accept-Language': 'en-US,en;q=0.5'
-                        };
-                        
-                        if (url.includes('cors-anywhere')) {
-                            headers['X-Requested-With'] = 'XMLHttpRequest';
-                        }
-                        
-                        response = await fetch(url, {
-                            method: 'GET',
-                            headers: headers,
-                            signal: AbortSignal.timeout(15000)
-                        });
-                        
-                        if (response.ok) {
-                            html = await response.text();
-                        }
-                    }
-                    
-                    if (!html) {
-                        console.log(`No HTML content from ${url}`);
-                        continue;
-                    }
-                    
-                    console.log(`Successfully fetched HTML, length: ${html.length}`);
-                    
-                    // 解析数据
-                    const puzzleData = parseMashableHTML(html, dateStr);
-                    if (puzzleData) {
-                        console.log('Successfully parsed Mashable data');
-                        return puzzleData;
-                    }
-                    
-                } catch (error) {
-                    console.log(`URL ${proxyFn(baseUrl)} failed:`, error.message);
-                    continue;
-                }
-            }
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            signal: AbortSignal.timeout(15000)
+        });
+        
+        if (!response.ok) {
+            console.log('❌ 请求失败:', response.status);
+            return null;
+        }
+        
+        const html = await response.text();
+        console.log('2. HTML长度:', html.length);
+        
+        // 使用完美解析逻辑
+        const result = parseMashableHTML(html, today.toISOString().split('T')[0]);
+        if (result) {
+            console.log('🎉 完美逻辑解析成功!');
+            return result;
         }
         
         return null;
@@ -531,224 +473,187 @@ async function fetchFromMashable() {
     }
 }
 
-// 解析Mashable HTML内容 - 改进版
+// 解析Mashable HTML内容 - 完美逻辑版本
 function parseMashableHTML(html, dateStr) {
     try {
-        console.log('开始Mashable HTML解析...');
+        console.log('🎯 开始完美逻辑解析...');
         
-        // 新方法1: 查找今天日期的确认
-        const today = new Date();
-        const monthName = ['january', 'february', 'march', 'april', 'may', 'june',
-                          'july', 'august', 'september', 'october', 'november', 'december'][today.getMonth()];
-        const day = today.getDate();
+        // 3. 查找关键短语
+        const targetPhrase = "Today's connections fall into the following categories:";
+        const phraseIndex = html.indexOf(targetPhrase);
         
-        const datePatterns = [
-            new RegExp(`${monthName}\\s+${day}`, 'i'),
-            new RegExp(`${day}\\s+${monthName}`, 'i'),
-            new RegExp(`${today.getMonth() + 1}[\/\\-]${day}`, 'i'),
-            new RegExp(`${day}[\/\\-]${today.getMonth() + 1}`, 'i')
-        ];
-        
-        let hasDateMatch = false;
-        for (const pattern of datePatterns) {
-            if (pattern.test(html)) {
-                hasDateMatch = true;
-                console.log('找到今天日期匹配');
-                break;
-            }
+        if (phraseIndex === -1) {
+            console.log('❌ 未找到关键短语');
+            return null;
         }
         
-        if (!hasDateMatch) {
-            console.log('警告: 未找到今天日期，可能不是今天的文章');
-        }
+        console.log('3. 找到关键短语，位置:', phraseIndex);
         
-        // 新方法2: 更精确的答案提取
-        const improvedAnswerPattern = /(Yellow|Green|Blue|Purple)[\s\S]*?<strong[^>]*>([^<]+)<\/strong>/gi;
-        const colorMatches = [...html.matchAll(improvedAnswerPattern)];
+        // 4. 提取关键短语之后的内容
+        const afterPhrase = html.substring(phraseIndex + targetPhrase.length);
         
-        console.log(`找到 ${colorMatches.length} 个颜色匹配`);
+        // 5. 在关键短语之后提取4个分组名称
+        const searchContent = afterPhrase.substring(0, 1000);
+        const colorHints = {};
+        const colors = ['Yellow', 'Green', 'Blue', 'Purple'];
         
-        if (colorMatches.length >= 4) {
-            const hints = {};
-            colorMatches.forEach(match => {
-                const color = match[1];
-                const hint = match[2].trim();
-                hints[color] = hint;
-                console.log(`${color}: ${hint}`);
-            });
-            
-            // 新方法3: 在答案区域查找实际单词
-            const answerSectionPattern = /(?:answer|solution)[\s\S]{0,2000}/gi;
-            const answerSections = html.match(answerSectionPattern) || [];
-            
-            console.log(`找到 ${answerSections.length} 个答案区域`);
-            
-            for (const section of answerSections) {
-                // 查找大写单词列表
-                const wordListPatterns = [
-                    // 逗号分隔的大写单词
-                    /([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*),\s*([A-Z][A-Z\-\d]*)/g,
-                    // 列表项中的单词
-                    /<li[^>]*>([A-Z][A-Z\-\d\s]*)<\/li>/gi,
-                    // 强调标签中的单词
-                    /<(?:strong|b)[^>]*>([A-Z][A-Z\-\d\s]*)<\/(?:strong|b)>/gi
-                ];
-                
-                const foundWords = [];
-                
-                for (const pattern of wordListPatterns) {
-                    const matches = [...section.matchAll(pattern)];
-                    for (const match of matches) {
-                        if (match.length >= 5) {
-                            // 4个单词的组
-                            foundWords.push([match[1], match[2], match[3], match[4]]);
-                        } else if (match[1]) {
-                            // 单个单词
-                            const word = match[1].trim().toUpperCase();
-                            if (word.length >= 2 && word.length <= 15) {
-                                foundWords.push(word);
-                            }
-                        }
-                    }
-                }
-                
-                console.log('在答案区域找到的单词:', foundWords.slice(0, 20));
-                
-                // 如果找到足够的单词，创建分组
-                if (foundWords.length >= 16 || (foundWords.length >= 4 && foundWords[0] instanceof Array)) {
-                    const groups = createGroupsFromWords(foundWords, hints);
-                    if (groups.length === 4) {
-                        console.log('成功从答案区域创建分组');
-                        return {
-                            date: dateStr,
-                            words: groups.flatMap(g => g.words),
-                            groups: groups,
-                            source: 'Mashable (Improved)'
-                        };
-                    }
-                }
-            }
-        }
-        
-        // 方法1: 查找完整的答案格式 (保留原有逻辑作为备用)
-        const answerPattern = /Yellow:\s*<strong>([^<]+)<\/strong>[\s\S]*?Green:\s*<strong>([^<]+)<\/strong>[\s\S]*?Blue:[\s\S]*?<strong>([^<]+)<\/strong>[\s\S]*?Purple:[\s\S]*?<strong>([^<]+)<\/strong>/i;
-        const answerMatch = html.match(answerPattern);
-        
-        if (answerMatch) {
-            console.log('找到答案提示格式');
-            
-            const hints = {
-                Yellow: answerMatch[1].trim(),
-                Green: answerMatch[2].trim(),
-                Blue: answerMatch[3].trim(),
-                Purple: answerMatch[4].trim()
-            };
-            
-            console.log('提取的提示:', hints);
-            
-            // 查找实际的答案单词 - 使用更灵活的模式
-            const wordPatterns = [
-                // 查找包含实际单词的区域
-                /([A-Z-]+),\s*([A-Z-]+),\s*([A-Z-]+)[\s\S]*?Increase:\s*([A-Z-]+),\s*([A-Z-]+),\s*([A-Z-]+),\s*([A-Z-]+)[\s\S]*?Places that sell gas:\s*([A-Z0-9-]+),\s*([A-Z-]+),\s*([A-Z-]+),\s*([A-Z-]+)[\s\S]*?Split[\s\S]*?([A-Z0-9-]+),\s*([A-Z-]+),\s*([A-Z-]+),\s*([A-Z-]+)/i,
-                // 备用模式
-                /NAME,\s*PERSONALITY,\s*STAR[\s\S]*?BALLOON,\s*MOUNT,\s*MUSHROOM,\s*WAX[\s\S]*?7-ELEVEN,\s*CHEVRON,\s*GULF,\s*SHELL[\s\S]*?7-10,\s*BANANA,\s*LICKETY,\s*STOCK/i
+        colors.forEach(color => {
+            const patterns = [
+                new RegExp(`${color}:\\s*"([^"]{1,50})"`, 'i'),
+                new RegExp(`${color}:\\s*([^\\n<]{1,50})`, 'i')
             ];
             
-            for (const pattern of wordPatterns) {
-                const wordMatch = html.match(pattern);
-                if (wordMatch) {
-                    console.log('找到答案单词格式');
-                    
-                    // 根据匹配的模式提取单词
-                    let groups;
-                    if (wordMatch.length > 15) {
-                        // 第一种模式 - 完整匹配
-                        groups = [
-                            {
-                                theme: hints.Yellow,
-                                words: [wordMatch[1], wordMatch[2], wordMatch[3], 'CELEBRITY'],
-                                difficulty: 'yellow',
-                                hint: hints.Yellow
-                            },
-                            {
-                                theme: hints.Green,
-                                words: [wordMatch[4], wordMatch[5], wordMatch[6], wordMatch[7]],
-                                difficulty: 'green',
-                                hint: hints.Green
-                            },
-                            {
-                                theme: hints.Blue,
-                                words: [wordMatch[8], wordMatch[9], wordMatch[10], wordMatch[11]],
-                                difficulty: 'blue',
-                                hint: hints.Blue
-                            },
-                            {
-                                theme: hints.Purple,
-                                words: [wordMatch[12], wordMatch[13], wordMatch[14], wordMatch[15]],
-                                difficulty: 'purple',
-                                hint: hints.Purple
+            for (const pattern of patterns) {
+                const match = searchContent.match(pattern);
+                if (match) {
+                    let hint = match[1].trim();
+                    if (hint.length > 30) {
+                        const cutPoints = ['Green:', 'Blue:', 'Purple:', 'Looking', 'Ready'];
+                        for (const cutPoint of cutPoints) {
+                            const cutIndex = hint.indexOf(cutPoint);
+                            if (cutIndex > 0 && cutIndex < 30) {
+                                hint = hint.substring(0, cutIndex).trim();
+                                break;
                             }
-                        ];
-                    } else {
-                        // 动态提取单词 - 不使用硬编码答案
-                        const allWords = extractAllWordsFromHTML(html);
-                        console.log('提取到的所有单词:', allWords.slice(0, 20));
-                        
-                        if (allWords.length >= 16) {
-                            groups = [
-                                {
-                                    theme: hints.Yellow,
-                                    words: allWords.slice(0, 4),
-                                    difficulty: 'yellow',
-                                    hint: hints.Yellow
-                                },
-                                {
-                                    theme: hints.Green,
-                                    words: allWords.slice(4, 8),
-                                    difficulty: 'green',
-                                    hint: hints.Green
-                                },
-                                {
-                                    theme: hints.Blue,
-                                    words: allWords.slice(8, 12),
-                                    difficulty: 'blue',
-                                    hint: hints.Blue
-                                },
-                                {
-                                    theme: hints.Purple,
-                                    words: allWords.slice(12, 16),
-                                    difficulty: 'purple',
-                                    hint: hints.Purple
-                                }
-                            ];
                         }
                     }
-                    
-                    console.log('成功解析4个组');
-                    return {
-                        date: dateStr,
-                        words: groups.flatMap(g => g.words),
-                        groups: groups,
-                        source: 'Mashable'
-                    };
+                    colorHints[color] = hint;
+                    console.log(`   ${color}: ${hint}`);
+                    break;
                 }
+            }
+        });
+        
+        if (Object.keys(colorHints).length < 4) {
+            console.log('❌ 未找到4个分组');
+            return null;
+        }
+        
+        console.log('4. 找到4个分组名称');
+        
+        // 6. 找到答案区域（包含实际单词的区域）
+        console.log('\\n5. 查找答案区域...');
+        
+        // 查找包含实际答案的区域，通常在"What is the answer"之后
+        let answerAreaStart = html.indexOf('What is the answer to Connections today');
+        if (answerAreaStart === -1) {
+            answerAreaStart = html.indexOf('"You should know better!"');
+        }
+        
+        if (answerAreaStart === -1) {
+            console.log('❌ 未找到答案区域');
+            return null;
+        }
+        
+        const answerArea = html.substring(answerAreaStart);
+        console.log('找到答案区域，长度:', answerArea.length);
+        
+        // 7. 严格按照完美逻辑：在答案区域中查找分组名称之间的内容
+        console.log('\\n6. 严格按照逻辑解析单词...');
+        
+        // 构建边界：4个分组名称 + 结束标记
+        const boundaries = [
+            colorHints['Yellow'],
+            colorHints['Green'],
+            colorHints['Blue'], 
+            colorHints['Purple'],
+            "Don't feel down"
+        ];
+        
+        const groups = [];
+        const difficulties = ['yellow', 'green', 'blue', 'purple'];
+        
+        for (let i = 0; i < 4; i++) {
+            const color = colors[i];
+            const difficulty = difficulties[i];
+            const hint = colorHints[color];
+            const startBoundary = boundaries[i];
+            const endBoundary = boundaries[i + 1];
+            
+            console.log(`\\n   ${color} 组: 从 "${startBoundary}" 到 "${endBoundary}"`);
+            
+            // 在答案区域中查找起始边界
+            const startIndex = answerArea.indexOf(startBoundary);
+            if (startIndex === -1) {
+                console.log(`     ❌ 未找到起始边界`);
+                continue;
+            }
+            
+            // 在起始边界之后查找结束边界
+            const endIndex = answerArea.indexOf(endBoundary, startIndex + startBoundary.length);
+            if (endIndex === -1) {
+                console.log(`     ❌ 未找到结束边界`);
+                continue;
+            }
+            
+            // 提取两个边界之间的内容
+            const betweenContent = answerArea.substring(startIndex + startBoundary.length, endIndex);
+            console.log(`     区间长度: ${betweenContent.length}`);
+            
+            // 计算逗号数量
+            const commas = (betweenContent.match(/,/g) || []).length;
+            console.log(`     逗号数量: ${commas}`);
+            
+            if (commas >= 3) {
+                // 查找冒号后的内容
+                const colonIndex = betweenContent.indexOf(':');
+                if (colonIndex !== -1) {
+                    const afterColon = betweenContent.substring(colonIndex + 1);
+                    
+                    // 简单按逗号分割，取前4个词组（可能是单词或词组）
+                    const afterColonClean = afterColon.trim();
+                    const allParts = afterColonClean.split(',').map(part => part.trim());
+                    
+                    if (allParts.length >= 4) {
+                        // 取前4个逗号分隔的部分
+                        const words = allParts.slice(0, 4);
+                        
+                        console.log(`     ✅ 成功: ${words.join(', ')}`);
+                        
+                        groups.push({
+                            theme: hint,
+                            words: words,
+                            difficulty: difficulty,
+                            hint: hint
+                        });
+                    } else {
+                        console.log(`     ❌ 逗号分隔的部分不足4个 (找到 ${allParts.length} 个)`);
+                    }
+                } else {
+                    console.log(`     ❌ 未找到冒号`);
+                }
+            } else {
+                console.log(`     ❌ 逗号不足（需要3个）`);
             }
         }
         
-        // 方法2: 通用解析方法 (如果上面的特定方法失败)
-        console.log('尝试通用解析方法...');
-        
-        const groups = [];
-        const answerPatterns = [
-            /(?:Green|Yellow|Blue|Purple)[\s\S]*?:([\s\S]*?)(?=(?:Green|Yellow|Blue|Purple)|$)/gi,
-            /(?:🟢|🟡|🔵|🟣)[\s\S]*?:([\s\S]*?)(?=(?:🟢|🟡|🔵|🟣)|$)/gi,
-            /<strong[^>]*>(?:Green|Yellow|Blue|Purple)[^<]*<\/strong>([\s\S]*?)(?=<strong[^>]*>(?:Green|Yellow|Blue|Purple)|$)/gi
-        ];
-        
-        for (const pattern of answerPatterns) {
-            const matches = [...html.matchAll(pattern)];
-            if (matches.length >= 4) {
-                console.log(`Found ${matches.length} groups with pattern`);
+        if (groups.length === 4) {
+            console.log('\\n🎉 完美成功!');
+            const result = {
+                date: dateStr,
+                words: groups.flatMap(g => g.words),
+                groups: groups,
+                source: 'Mashable (Perfect Logic)'
+            };
+            
+            console.log('\\n📊 最终结果:');
+            result.groups.forEach((group, i) => {
+                const emoji = {
+                    'yellow': '🟡',
+                    'green': '🟢', 
+                    'blue': '🔵',
+                    'purple': '🟣'
+                }[group.difficulty] || '⚪';
+                
+                console.log(`     ${emoji} ${group.theme}`);
+                console.log(`        ${group.words.join(', ')}`);
+            });
+            
+            return result;
+        } else {
+            console.log(`\\n❌ 只解析出 ${groups.length} 个分组`);
+            return null;
+        }
                 
                 for (let i = 0; i < Math.min(4, matches.length); i++) {
                     const wordsText = matches[i][1];

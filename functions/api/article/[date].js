@@ -63,7 +63,7 @@ export async function onRequest(context) {
             // 存储生成的文章
             if (env.CONNECTIONS_KV) {
                 await env.CONNECTIONS_KV.put(`article-${date}`, generatedArticle, {
-                    expirationTtl: 86400 * 7 // 7天过期
+                    expirationTtl: 86400 * 90 // 90天过期 - 更好的SEO效果
                 });
             }
             
