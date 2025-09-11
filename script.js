@@ -530,16 +530,30 @@ function getThemeHint() {
         return "Sorry, unable to get hint data.";
     }
     
-    const availableGroups = todaysPuzzle.groups.filter(group => 
+    // 获取用户还没有完成的分组
+    const completedThemes = gameState.foundGroups.map(group => group.theme);
+    const incompleteGroups = todaysPuzzle.groups.filter(group => 
+        !completedThemes.includes(group.theme)
+    );
+    
+    if (incompleteGroups.length === 0) {
+        return "🎉 Amazing! You've already completed all groups! No more hints needed!";
+    }
+    
+    // 从未完成的分组中筛选还没给过提示的
+    const availableGroups = incompleteGroups.filter(group => 
         !usedHints.includes(group.theme)
     );
     
-    if (availableGroups.length === 0) {
-        return "I've already given you theme hints for all groups! Try other types of hints.";
-    }
+    // 如果所有未完成的分组都给过提示了，就重新从未完成的分组中选择
+    const groupsToChooseFrom = availableGroups.length > 0 ? availableGroups : incompleteGroups;
     
-    const randomGroup = availableGroups[Math.floor(Math.random() * availableGroups.length)];
-    usedHints.push(randomGroup.theme);
+    const randomGroup = groupsToChooseFrom[Math.floor(Math.random() * groupsToChooseFrom.length)];
+    
+    // 只有在是新提示时才添加到usedHints
+    if (!usedHints.includes(randomGroup.theme)) {
+        usedHints.push(randomGroup.theme);
+    }
     
     return `💡 One group's theme is "${randomGroup.theme}". Can you find these four words?`;
 }
@@ -550,6 +564,16 @@ function getDifficultyHint() {
         return "Sorry, unable to get hint data.";
     }
     
+    // 获取用户还没有完成的分组
+    const completedThemes = gameState.foundGroups.map(group => group.theme);
+    const incompleteGroups = todaysPuzzle.groups.filter(group => 
+        !completedThemes.includes(group.theme)
+    );
+    
+    if (incompleteGroups.length === 0) {
+        return "🎉 Congratulations! You've completed all groups! No more hints needed!";
+    }
+    
     const difficultyColors = {
         'green': 'green (easiest)',
         'yellow': 'yellow (easy)', 
@@ -557,7 +581,7 @@ function getDifficultyHint() {
         'purple': 'purple (hardest)'
     };
     
-    const randomGroup = todaysPuzzle.groups[Math.floor(Math.random() * todaysPuzzle.groups.length)];
+    const randomGroup = incompleteGroups[Math.floor(Math.random() * incompleteGroups.length)];
     const difficultyText = difficultyColors[randomGroup.difficulty] || randomGroup.difficulty;
     return `🌈 One group is ${difficultyText} difficulty. ${randomGroup.hint}`;
 }
@@ -568,7 +592,17 @@ function getWordHint() {
         return "Sorry, unable to get hint data.";
     }
     
-    const randomGroup = todaysPuzzle.groups[Math.floor(Math.random() * todaysPuzzle.groups.length)];
+    // 获取用户还没有完成的分组
+    const completedThemes = gameState.foundGroups.map(group => group.theme);
+    const incompleteGroups = todaysPuzzle.groups.filter(group => 
+        !completedThemes.includes(group.theme)
+    );
+    
+    if (incompleteGroups.length === 0) {
+        return "🎉 Perfect! You've found all groups! No more word hints needed!";
+    }
+    
+    const randomGroup = incompleteGroups[Math.floor(Math.random() * incompleteGroups.length)];
     const randomWords = randomGroup.words.slice(0, 2);
     
     return `💡 "${randomWords[0]}" and "${randomWords[1]}" belong to the same group. Can you find the other two?`;
