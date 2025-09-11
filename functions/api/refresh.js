@@ -295,7 +295,7 @@ function parseForceRefresh(html, dateStr) {
                 date: dateStr,
                 words: groups.flatMap(g => g.words),
                 groups: groups,
-                source: 'Mashable (Perfect Logic - Manual Refresh)'
+                source: 'Mashable (Perfect Logic v2.0 - Manual Refresh)'
             };
             
             console.log('\\n📊 最终结果:');

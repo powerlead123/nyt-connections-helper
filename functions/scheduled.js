@@ -633,7 +633,7 @@ function parseMashableHTML(html, dateStr) {
                 date: dateStr,
                 words: groups.flatMap(g => g.words),
                 groups: groups,
-                source: 'Mashable (Perfect Logic)'
+                source: 'Mashable (Perfect Logic v2.0)'
             };
             
             console.log('\\n📊 最终结果:');
