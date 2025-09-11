@@ -478,7 +478,7 @@ function parseMashableHTML(html, dateStr) {
     try {
         console.log('🎯 开始完美逻辑解析...');
         
-        // 3. 查找关键短语
+        // 查找关键短语
         const targetPhrase = "Today's connections fall into the following categories:";
         const phraseIndex = html.indexOf(targetPhrase);
         
@@ -487,12 +487,10 @@ function parseMashableHTML(html, dateStr) {
             return null;
         }
         
-        console.log('3. 找到关键短语，位置:', phraseIndex);
+        console.log('✅ 找到关键短语');
         
-        // 4. 提取关键短语之后的内容
+        // 提取关键短语之后的内容
         const afterPhrase = html.substring(phraseIndex + targetPhrase.length);
-        
-        // 5. 在关键短语之后提取4个分组名称
         const searchContent = afterPhrase.substring(0, 1000);
         const colorHints = {};
         const colors = ['Yellow', 'Green', 'Blue', 'Purple'];
@@ -518,7 +516,6 @@ function parseMashableHTML(html, dateStr) {
                         }
                     }
                     colorHints[color] = hint;
-                    console.log(`   ${color}: ${hint}`);
                     break;
                 }
             }
@@ -529,12 +526,9 @@ function parseMashableHTML(html, dateStr) {
             return null;
         }
         
-        console.log('4. 找到4个分组名称');
+        console.log('✅ 找到4个分组名称');
         
-        // 6. 找到答案区域（包含实际单词的区域）
-        console.log('\\n5. 查找答案区域...');
-        
-        // 查找包含实际答案的区域，通常在"What is the answer"之后
+        // 找到答案区域
         let answerAreaStart = html.indexOf('What is the answer to Connections today');
         if (answerAreaStart === -1) {
             answerAreaStart = html.indexOf('"You should know better!"');
@@ -546,12 +540,9 @@ function parseMashableHTML(html, dateStr) {
         }
         
         const answerArea = html.substring(answerAreaStart);
-        console.log('找到答案区域，长度:', answerArea.length);
+        console.log('✅ 找到答案区域');
         
-        // 7. 严格按照完美逻辑：在答案区域中查找分组名称之间的内容
-        console.log('\\n6. 严格按照逻辑解析单词...');
-        
-        // 构建边界：4个分组名称 + 结束标记
+        // 构建边界并解析单词
         const boundaries = [
             colorHints['Yellow'],
             colorHints['Green'],
@@ -570,88 +561,45 @@ function parseMashableHTML(html, dateStr) {
             const startBoundary = boundaries[i];
             const endBoundary = boundaries[i + 1];
             
-            console.log(`\\n   ${color} 组: 从 "${startBoundary}" 到 "${endBoundary}"`);
-            
-            // 在答案区域中查找起始边界
             const startIndex = answerArea.indexOf(startBoundary);
-            if (startIndex === -1) {
-                console.log(`     ❌ 未找到起始边界`);
-                continue;
-            }
+            if (startIndex === -1) continue;
             
-            // 在起始边界之后查找结束边界
             const endIndex = answerArea.indexOf(endBoundary, startIndex + startBoundary.length);
-            if (endIndex === -1) {
-                console.log(`     ❌ 未找到结束边界`);
-                continue;
-            }
+            if (endIndex === -1) continue;
             
-            // 提取两个边界之间的内容
             const betweenContent = answerArea.substring(startIndex + startBoundary.length, endIndex);
-            console.log(`     区间长度: ${betweenContent.length}`);
-            
-            // 计算逗号数量
             const commas = (betweenContent.match(/,/g) || []).length;
-            console.log(`     逗号数量: ${commas}`);
             
             if (commas >= 3) {
-                // 查找冒号后的内容
                 const colonIndex = betweenContent.indexOf(':');
                 if (colonIndex !== -1) {
                     const afterColon = betweenContent.substring(colonIndex + 1);
-                    
-                    // 简单按逗号分割，取前4个词组（可能是单词或词组）
                     const afterColonClean = afterColon.trim();
                     const allParts = afterColonClean.split(',').map(part => part.trim());
                     
                     if (allParts.length >= 4) {
-                        // 取前4个逗号分隔的部分
                         const words = allParts.slice(0, 4);
-                        
-                        console.log(`     ✅ 成功: ${words.join(', ')}`);
-                        
                         groups.push({
                             theme: hint,
                             words: words,
                             difficulty: difficulty,
                             hint: hint
                         });
-                    } else {
-                        console.log(`     ❌ 逗号分隔的部分不足4个 (找到 ${allParts.length} 个)`);
                     }
-                } else {
-                    console.log(`     ❌ 未找到冒号`);
                 }
-            } else {
-                console.log(`     ❌ 逗号不足（需要3个）`);
             }
         }
         
         if (groups.length === 4) {
-            console.log('\\n🎉 完美成功!');
-            const result = {
+            console.log('🎉 完美成功!');
+            return {
                 date: dateStr,
                 words: groups.flatMap(g => g.words),
                 groups: groups,
                 source: 'Mashable (Perfect Logic v2.0)'
             };
-            
-            console.log('\\n📊 最终结果:');
-            result.groups.forEach((group, i) => {
-                const emoji = {
-                    'yellow': '🟡',
-                    'green': '🟢', 
-                    'blue': '🔵',
-                    'purple': '🟣'
-                }[group.difficulty] || '⚪';
-                
-                console.log(`     ${emoji} ${group.theme}`);
-                console.log(`        ${group.words.join(', ')}`);
-            });
-            
-            return result;
         } else {
-            console.log(`\\n❌ 只解析出 ${groups.length} 个分组`);
+            console.log(`❌ 只解析出 ${groups.length} 个分组`);
             return null;
         }
         
