@@ -654,6 +654,12 @@ function parseMashableHTML(html, dateStr) {
             console.log(`\\n❌ 只解析出 ${groups.length} 个分组`);
             return null;
         }
+        
+    } catch (error) {
+        console.error('Perfect logic parsing error:', error);
+        return null;
+    }
+}
                 
                 for (let i = 0; i < Math.min(4, matches.length); i++) {
                     const wordsText = matches[i][1];
