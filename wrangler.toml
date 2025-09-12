@@ -1,15 +1,16 @@
+# Cloudflare Pages配置文件
 name = "nyt-connections-helper"
-compatibility_date = "2024-08-28"
-pages_build_output_dir = "."
+compatibility_date = "2023-10-30"
 
-[env.production]
-name = "nyt-connections-helper"
+# 定时触发配置
+[triggers]
+crons = ["0 1 * * *"]  # 每天UTC 01:00执行
 
-[[env.production.kv_namespaces]]
+# KV存储绑定
+[[kv_namespaces]]
 binding = "CONNECTIONS_KV"
-id = "7d0ba7d76b4946f5b33bd584bc082c7b"
+id = "your-kv-namespace-id"  # 需要替换为实际的KV namespace ID
 
-[env.production.vars]
+# 环境变量
+[vars]
 ENVIRONMENT = "production"
-SITE_URL = "https://nyt-connections-helper.pages.dev"
-CRON_SECRET = "nyt-helper-secret-2025"

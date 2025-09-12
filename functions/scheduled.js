@@ -1,64 +1,108 @@
 // Cloudflare Pages Function for scheduled tasks
+// 支持两种触发方式：
+// 1. HTTP POST请求（兼容GitHub Actions）
+// 2. Cloudflare Cron Triggers
+
 export async function onRequest(context) {
     const { request, env } = context;
     
-    // 只允许 POST 请求和正确的密钥
-    if (request.method !== 'POST') {
-        return new Response('Method not allowed', { status: 405 });
+    // HTTP请求触发（兼容GitHub Actions）
+    if (request.method === 'POST') {
+        try {
+            const body = await request.json();
+            const { action, secret } = body;
+            
+            // 验证密钥（可以在环境变量中设置）
+            if (secret !== env.CRON_SECRET && secret !== 'your-secret-key-here') {
+                return new Response('Unauthorized', { status: 401 });
+            }
+            
+            const result = await executeScheduledTask(action, env);
+            
+            return new Response(JSON.stringify({
+                success: true,
+                timestamp: new Date().toISOString(),
+                result: result,
+                trigger: 'http'
+            }), {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+        } catch (error) {
+            console.error('HTTP scheduled task error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString(),
+                trigger: 'http'
+            }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
     }
     
-    try {
-        const body = await request.json();
-        const { action, secret } = body;
+    return new Response('Method not allowed', { status: 405 });
+}
+
+// Cloudflare Cron Trigger处理函数
+export default {
+    async scheduled(event, env, ctx) {
+        console.log('🕐 Cloudflare Cron Trigger执行:', new Date().toISOString());
         
-        // 验证密钥（可以在环境变量中设置）
-        if (secret !== env.CRON_SECRET && secret !== 'your-secret-key-here') {
-            return new Response('Unauthorized', { status: 401 });
+        try {
+            // 执行每日更新任务
+            const result = await executeScheduledTask('daily-update', env);
+            
+            console.log('✅ 定时任务执行成功:', result);
+            
+            return {
+                success: true,
+                timestamp: new Date().toISOString(),
+                result: result,
+                trigger: 'cron'
+            };
+            
+        } catch (error) {
+            console.error('❌ Cron scheduled task error:', error);
+            
+            // 可以在这里添加错误通知逻辑
+            // 比如发送邮件或Webhook通知
+            
+            throw error;
         }
-        
-        let result;
-        
-        switch (action) {
-            case 'scrape-data':
-                result = await scrapeAndUpdateData(env);
-                break;
-            case 'generate-article':
-                result = await generateDailyArticle(env);
-                break;
-            case 'daily-update':
-                // 执行完整的每日更新流程
-                const scrapeResult = await scrapeAndUpdateData(env);
-                const articleResult = await generateDailyArticle(env);
-                result = { scrape: scrapeResult, article: articleResult };
-                break;
-            default:
-                return new Response('Invalid action', { status: 400 });
-        }
-        
-        return new Response(JSON.stringify({
-            success: true,
-            timestamp: new Date().toISOString(),
-            result: result
-        }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-    } catch (error) {
-        console.error('Scheduled task error:', error);
-        return new Response(JSON.stringify({
-            success: false,
-            error: error.message,
-            timestamp: new Date().toISOString()
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
     }
+};
+
+// 执行定时任务的核心逻辑
+async function executeScheduledTask(action, env) {
+    let result;
+    
+    switch (action) {
+        case 'scrape-data':
+            result = await scrapeAndUpdateData(env);
+            break;
+        case 'generate-article':
+            result = await generateDailyArticle(env);
+            break;
+        case 'daily-update':
+            // 执行完整的每日更新流程
+            const scrapeResult = await scrapeAndUpdateData(env);
+            const articleResult = await generateDailyArticle(env);
+            result = { scrape: scrapeResult, article: articleResult };
+            break;
+        default:
+            throw new Error('Invalid action: ' + action);
+    }
+    
+    return result;
 }
 
 // 抓取和更新数据
 async function scrapeAndUpdateData(env) {
     try {
+        console.log('🎯 开始抓取数据...');
+        
         // 获取今日谜题数据
         const puzzleData = await fetchTodaysPuzzleData();
         
@@ -70,6 +114,7 @@ async function scrapeAndUpdateData(env) {
                 await env.CONNECTIONS_KV.put(`puzzle-${today}`, JSON.stringify(puzzleData), {
                     expirationTtl: 86400 // 24小时过期
                 });
+                console.log('✅ 数据已保存到KV存储');
             }
             
             return {
@@ -91,6 +136,8 @@ async function scrapeAndUpdateData(env) {
 // 生成每日文章
 async function generateDailyArticle(env) {
     try {
+        console.log('📝 开始生成文章...');
+        
         const today = new Date().toISOString().split('T')[0];
         
         // 获取谜题数据
@@ -112,6 +159,7 @@ async function generateDailyArticle(env) {
                 await env.CONNECTIONS_KV.put(`article-${today}`, article, {
                     expirationTtl: 86400 * 90 // 90天过期 - 更好的SEO效果
                 });
+                console.log('✅ 文章已保存到KV存储');
             }
             
             return {
@@ -129,9 +177,11 @@ async function generateDailyArticle(env) {
     }
 }
 
-// 获取今日谜题数据
+// 获取今日谜题数据 - 使用完美逻辑
 async function fetchTodaysPuzzleData() {
     try {
+        console.log('🎯 使用完美抓取逻辑');
+        
         // 尝试从Mashable获取
         const mashableData = await fetchFromMashable();
         if (mashableData) return mashableData;
@@ -148,8 +198,6 @@ async function fetchTodaysPuzzleData() {
 // 从Mashable获取数据 - 使用完美逻辑
 async function fetchFromMashable() {
     try {
-        console.log('🎯 使用完美抓取逻辑');
-        
         const today = new Date();
         const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
                            'july', 'august', 'september', 'october', 'november', 'december'];
@@ -308,17 +356,17 @@ function parseMashableHTML(html, dateStr) {
         }
         
         if (groups.length === 4) {
-            console.log('🎉 完美成功!');
+            console.log('🎉 完美逻辑解析成功!');
             return {
                 date: dateStr,
                 words: groups.flatMap(g => g.words),
                 groups: groups,
-                source: 'Mashable (Perfect Logic v2.0)'
+                source: 'Mashable (Perfect Logic - Cron Trigger)'
             };
-        } else {
-            console.log(`❌ 只解析出 ${groups.length} 个分组`);
-            return null;
         }
+        
+        console.log(`❌ 只解析出 ${groups.length} 个分组`);
+        return null;
         
     } catch (error) {
         console.error('Perfect logic parsing error:', error);
@@ -326,82 +374,7 @@ function parseMashableHTML(html, dateStr) {
     }
 }
 
-// 生成文章HTML
-function generateArticleHTML(puzzleData, date) {
-    const dateObj = new Date(date);
-    const formattedDate = dateObj.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    const difficultyColors = {
-        yellow: '🟡',
-        green: '🟢',
-        blue: '🔵',
-        purple: '🟣'
-    };
-    
-    const difficultyNames = {
-        yellow: 'Yellow (Easiest)',
-        green: 'Green (Easy)',
-        blue: 'Blue (Hard)',
-        purple: 'Purple (Hardest)'
-    };
-    
-    let groupsHTML = '';
-    
-    puzzleData.groups.forEach((group, index) => {
-        const emoji = difficultyColors[group.difficulty] || '⚪';
-        const difficultyName = difficultyNames[group.difficulty] || group.difficulty;
-        
-        groupsHTML += `
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-3">
-                ${emoji} ${group.theme} 
-                <span class="text-sm font-normal text-gray-600">(${difficultyName})</span>
-            </h3>
-            <div class="mb-4">
-                <h4 class="font-semibold text-gray-700 mb-2">Words:</h4>
-                <div class="flex flex-wrap gap-2">
-                    ${group.words.map(word => `<span class="bg-gray-100 px-3 py-1 rounded-full text-sm font-medium">${word}</span>`).join('')}
-                </div>
-            </div>
-            <div class="mb-4">
-                <h4 class="font-semibold text-gray-700 mb-2">Explanation:</h4>
-                <p class="text-gray-600">${group.hint || `These words are all related to "${group.theme}".`}</p>
-            </div>
-        </div>`;
-    });
-    
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NYT Connections ${formattedDate} - Answers & Solutions</title>
-    <meta name="description" content="Complete solutions and answers for NYT Connections puzzle on ${formattedDate}. Get hints, explanations, and strategies for today's word grouping challenge.">
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                NYT Connections ${formattedDate}
-            </h1>
-            <p class="text-gray-600">Complete Answers, Hints & Solutions</p>
-        </header>
-        
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Complete Answers</h2>
-            ${groupsHTML}
-        </div>
-    </div>
-</body>
-</html>`;
-}
-
+// 备用谜题数据
 function getBackupPuzzle() {
     const today = new Date().toISOString().split('T')[0];
     
@@ -434,6 +407,56 @@ function getBackupPuzzle() {
                 hint: 'Look at the last few letters of each word - they spell out keys on your keyboard'
             }
         ],
-        source: 'Backup'
+        source: 'Backup (Cron Trigger)'
     };
+}
+
+// 生成文章HTML内容
+function generateArticleHTML(puzzleData, date) {
+    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYT Connections ${formattedDate} - Answers, Hints & Solutions</title>
+    <meta name="description" content="Complete solutions and hints for NYT Connections puzzle ${formattedDate}. Get all answers, themes, and solving strategies.">
+</head>
+<body>
+    <h1>NYT Connections ${formattedDate} - Complete Solutions</h1>
+    
+    <h2>Today's Groups and Answers</h2>`;
+    
+    puzzleData.groups.forEach((group, index) => {
+        const difficultyEmoji = {
+            'yellow': '🟡',
+            'green': '🟢',
+            'blue': '🔵',
+            'purple': '🟣'
+        }[group.difficulty] || '⚪';
+        
+        html += `
+    <div class="group ${group.difficulty}">
+        <h3>${difficultyEmoji} ${group.theme}</h3>
+        <p><strong>Words:</strong> ${group.words.join(', ')}</p>
+        <p><strong>Hint:</strong> ${group.hint}</p>
+    </div>`;
+    });
+    
+    html += `
+    <h2>All Words</h2>
+    <p>${puzzleData.words.join(', ')}</p>
+    
+    <p><em>Data source: ${puzzleData.source}</em></p>
+    <p><em>Generated: ${new Date().toISOString()}</em></p>
+</body>
+</html>`;
+    
+    return html;
 }
