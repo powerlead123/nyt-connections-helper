@@ -160,25 +160,41 @@ function parseForceRefresh(html, dateStr) {
         const colors = ['Yellow', 'Green', 'Blue', 'Purple'];
         
         colors.forEach(color => {
+            // 🔧 改进的主题提取逻辑
             const patterns = [
-                new RegExp(`${color}:\\s*"([^"]{1,50})"`, 'i'),
-                new RegExp(`${color}:\\s*([^\\n<]{1,50})`, 'i')
+                // 带引号的完整匹配
+                new RegExp(`${color}:\\s*"([^"]+)"`, 'i'),
+                // 不带引号，到下一个颜色或关键词为止
+                new RegExp(`${color}:\\s*([^\\n]+?)(?=(?:Yellow|Green|Blue|Purple|Looking|Ready|Drumroll):)`, 'i'),
+                // 不带引号，到换行为止
+                new RegExp(`${color}:\\s*([^\\n<]+)`, 'i')
             ];
             
             for (const pattern of patterns) {
                 const match = searchContent.match(pattern);
                 if (match) {
                     let hint = match[1].trim();
-                    if (hint.length > 30) {
-                        const cutPoints = ['Green:', 'Blue:', 'Purple:', 'Looking', 'Ready'];
-                        for (const cutPoint of cutPoints) {
-                            const cutIndex = hint.indexOf(cutPoint);
-                            if (cutIndex > 0 && cutIndex < 30) {
-                                hint = hint.substring(0, cutIndex).trim();
-                                break;
-                            }
+                    
+                    // 🔧 智能截断逻辑
+                    const cutPoints = [
+                        'Looking for', 'Ready for', 'Drumroll',
+                        'Yellow:', 'Green:', 'Blue:', 'Purple:',
+                        'Here\'s the answer', 'This is your last'
+                    ];
+                    
+                    for (const cutPoint of cutPoints) {
+                        const cutIndex = hint.indexOf(cutPoint);
+                        if (cutIndex > 0) {
+                            hint = hint.substring(0, cutIndex).trim();
+                            break;
                         }
                     }
+                    
+                    // 长度限制
+                    if (hint.length > 50) {
+                        hint = hint.substring(0, 50).trim();
+                    }
+                    
                     colorHints[color] = hint;
                     console.log(`   ${color}: ${hint}`);
                     break;
@@ -207,8 +223,16 @@ function parseForceRefresh(html, dateStr) {
             return null;
         }
         
-        const answerArea = html.substring(answerAreaStart);
-        console.log('找到答案区域，长度:', answerArea.length);
+        let answerArea = html.substring(answerAreaStart);
+        
+        // 🔧 关键修复：清理转义字符
+        answerArea = answerArea.replace(/\\"/g, '"');
+        console.log('找到答案区域并清理转义字符，长度:', answerArea.length);
+        
+        // 🔧 同时清理主题中的转义字符，确保边界匹配一致
+        Object.keys(colorHints).forEach(color => {
+            colorHints[color] = colorHints[color].replace(/\\"/g, '"');
+        });
         
         // 7. 严格按照完美逻辑：在答案区域中查找分组名称之间的内容
         console.log('\\n6. 严格按照逻辑解析单词...');
