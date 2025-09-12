@@ -238,60 +238,91 @@ async function fetchFromMashable() {
     }
 }
 
-// 解析Mashable HTML内容 - 完美逻辑版本
+// 解析Mashable HTML内容 - 优化版本
 function parseMashableHTML(html, dateStr) {
     try {
-        console.log('🎯 开始完美逻辑解析...');
+        console.log('🎯 开始优化逻辑解析...');
         
-        // 查找关键短语
-        const targetPhrase = "Today's connections fall into the following categories:";
-        const phraseIndex = html.indexOf(targetPhrase);
+        // 1. 找到分组提示区域的开始和结束边界
+        const startPhrase = "Today's connections fall into the following categories:";
+        const startPos = html.indexOf(startPhrase);
         
-        if (phraseIndex === -1) {
-            console.log('❌ 未找到关键短语');
+        if (startPos === -1) {
+            console.log('❌ 未找到开始边界');
             return null;
         }
         
-        console.log('✅ 找到关键短语');
+        console.log('✅ 找到开始边界');
         
-        // 提取关键短语之后的内容
-        const afterPhrase = html.substring(phraseIndex + targetPhrase.length);
-        const searchContent = afterPhrase.substring(0, 1000);
-        const colorHints = {};
+        // 2. 找到结束边界
+        const endPhrase = "Looking for Wordle today?";
+        const endPos = html.indexOf(endPhrase, startPos);
+        
+        if (endPos === -1) {
+            console.log('❌ 未找到结束边界');
+            return null;
+        }
+        
+        console.log('✅ 找到结束边界');
+        
+        // 3. 提取分组提示区域
+        const hintSection = html.substring(startPos + startPhrase.length, endPos);
+        console.log('分组提示区域长度:', hintSection.length);
+        
+        // 4. 在明确范围内找4个颜色的位置
         const colors = ['Yellow', 'Green', 'Blue', 'Purple'];
+        const colorPositions = [];
         
-        colors.forEach(color => {
-            const patterns = [
-                new RegExp(`${color}:\\s*"([^"]{1,50})"`, 'i'),
-                new RegExp(`${color}:\\s*([^\\n<]{1,50})`, 'i')
-            ];
-            
-            for (const pattern of patterns) {
-                const match = searchContent.match(pattern);
-                if (match) {
-                    let hint = match[1].trim();
-                    if (hint.length > 30) {
-                        const cutPoints = ['Green:', 'Blue:', 'Purple:', 'Looking', 'Ready'];
-                        for (const cutPoint of cutPoints) {
-                            const cutIndex = hint.indexOf(cutPoint);
-                            if (cutIndex > 0 && cutIndex < 30) {
-                                hint = hint.substring(0, cutIndex).trim();
-                                break;
-                            }
-                        }
-                    }
-                    colorHints[color] = hint;
-                    break;
-                }
+        let currentPos = 0;
+        for (const color of colors) {
+            const colorPos = hintSection.indexOf(color + ':', currentPos);
+            if (colorPos === -1) {
+                console.log(`❌ 未找到 ${color} 位置`);
+                return null;
             }
-        });
+            colorPositions.push({ color, pos: colorPos });
+            currentPos = colorPos + 1;
+        }
+        
+        console.log('✅ 找到4个颜色位置');
+        
+        // 5. 提取各个分组的主题名称
+        const colorHints = {};
+        
+        for (let i = 0; i < colors.length; i++) {
+            const color = colors[i];
+            const startPos = colorPositions[i].pos + color.length + 1; // +1 for ':'
+            const endPos = i < colors.length - 1 ? colorPositions[i + 1].pos : hintSection.length;
+            
+            // 提取主题内容
+            let themeContent = hintSection.substring(startPos, endPos);
+            
+            // 清理主题内容
+            themeContent = themeContent
+                .replace(/<[^>]*>/g, ' ')           // 去掉HTML标签
+                .replace(/\s+/g, ' ')               // 多个空格合并为一个
+                .replace(/^\s*[:\-\s]*/, '')        // 去掉开头的冒号、破折号、空格
+                .replace(/\s*$/, '')                // 去掉结尾空格
+                .trim();
+            
+            // 🔧 保留必要的引号，只清理多余的引号字符
+            // 不要完全去掉引号，因为有些主题需要引号来匹配答案区域
+            
+            if (themeContent.length > 0 && themeContent.length < 100) {
+                colorHints[color] = themeContent;
+                console.log(`${color}: "${themeContent}"`);
+            } else {
+                console.log(`❌ ${color} 主题提取失败: "${themeContent}"`);
+                return null;
+            }
+        }
         
         if (Object.keys(colorHints).length < 4) {
-            console.log('❌ 未找到4个分组');
+            console.log('❌ 未找到4个完整分组');
             return null;
         }
         
-        console.log('✅ 找到4个分组名称');
+        console.log('✅ 成功提取4个分组名称');
         
         // 找到答案区域
         let answerAreaStart = html.indexOf('What is the answer to Connections today');
@@ -304,8 +335,16 @@ function parseMashableHTML(html, dateStr) {
             return null;
         }
         
-        const answerArea = html.substring(answerAreaStart);
-        console.log('✅ 找到答案区域');
+        let answerArea = html.substring(answerAreaStart);
+        
+        // 🔧 关键修复：清理转义字符
+        answerArea = answerArea.replace(/\\"/g, '"');
+        console.log('✅ 找到答案区域并清理转义字符');
+        
+        // 🔧 同时清理主题中的转义字符，确保边界匹配一致
+        Object.keys(colorHints).forEach(color => {
+            colorHints[color] = colorHints[color].replace(/\\"/g, '"');
+        });
         
         // 构建边界并解析单词
         const boundaries = [
