@@ -7,16 +7,16 @@ export async function onRequest(context) {
     const todayKey = `puzzle-${today}`;
     
     // 检查今日数据
-    const todayData = await env.PUZZLE_KV.get(todayKey, 'json');
+    const todayData = await env.CONNECTIONS_KV.get(todayKey, 'json');
     
     // 获取所有键
-    const allKeys = await env.PUZZLE_KV.list();
+    const allKeys = await env.CONNECTIONS_KV.list();
     
     // 获取最近几天的数据作为示例
     const recentData = {};
     const recentKeys = allKeys.keys.slice(0, 5);
     for (const key of recentKeys) {
-      const data = await env.PUZZLE_KV.get(key.name, 'json');
+      const data = await env.CONNECTIONS_KV.get(key.name, 'json');
       if (data) {
         recentData[key.name] = {
           date: data.date,
