@@ -482,50 +482,105 @@ function getBackupPuzzle() {
     };
 }
 
-// 生成文章HTML内容
+// 生成SEO优化的文章HTML内容
 function generateArticleHTML(puzzleData, date) {
-    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+    const dateObj = new Date(date);
+    const formattedDate = dateObj.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
     
+    const shortDate = dateObj.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    
+    // 生成更丰富的SEO内容
+    const difficultyLevels = {
+        'yellow': { name: 'Yellow (Easiest)', emoji: '🟡', description: 'straightforward category' },
+        'green': { name: 'Green (Easy)', emoji: '🟢', description: 'moderately easy category' },
+        'blue': { name: 'Blue (Medium)', emoji: '🔵', description: 'challenging category' },
+        'purple': { name: 'Purple (Hardest)', emoji: '🟣', description: 'most difficult category' }
+    };
+    
     let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NYT Connections ${formattedDate} - Answers, Hints & Solutions</title>
-    <meta name="description" content="Complete solutions and hints for NYT Connections puzzle ${formattedDate}. Get all answers, themes, and solving strategies.">
+    <title>NYT Connections ${shortDate} - Complete Answers, Hints & Solutions</title>
+    <meta name="description" content="Find all answers and hints for NYT Connections puzzle ${shortDate}. Complete solutions with explanations for all four categories: ${puzzleData.groups.map(g => g.theme).join(', ')}.">
+    <meta name="keywords" content="NYT Connections, New York Times Connections, ${shortDate}, puzzle answers, word game, daily puzzle, hints, solutions">
+    <meta property="og:title" content="NYT Connections ${shortDate} - Complete Solutions">
+    <meta property="og:description" content="Complete answers and hints for today's NYT Connections puzzle with detailed explanations.">
+    <meta property="og:type" content="article">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        .group { margin: 20px 0; padding: 15px; border-radius: 8px; border-left: 4px solid; }
+        .yellow { background-color: #fff9c4; border-left-color: #eab308; }
+        .green { background-color: #dcfce7; border-left-color: #16a34a; }
+        .blue { background-color: #dbeafe; border-left-color: #2563eb; }
+        .purple { background-color: #f3e8ff; border-left-color: #9333ea; }
+        .words { font-weight: bold; font-size: 1.1em; margin: 10px 0; }
+        .hint { font-style: italic; color: #666; }
+        .intro { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .tips { background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    </style>
 </head>
 <body>
-    <h1>NYT Connections ${formattedDate} - Complete Solutions</h1>
+    <h1>NYT Connections ${formattedDate} - Complete Answers & Solutions</h1>
     
-    <h2>Today's Groups and Answers</h2>`;
+    <div class="intro">
+        <p>Welcome to today's NYT Connections puzzle solution! Below you'll find all the answers, hints, and explanations for the ${shortDate} puzzle. Each group is color-coded by difficulty level, from yellow (easiest) to purple (hardest).</p>
+    </div>
+
+    <h2>🎯 Complete Solutions by Difficulty</h2>`;
     
-    puzzleData.groups.forEach((group, index) => {
-        const difficultyEmoji = {
-            'yellow': '🟡',
-            'green': '🟢',
-            'blue': '🔵',
-            'purple': '🟣'
-        }[group.difficulty] || '⚪';
+    // 按难度顺序排序
+    const orderedGroups = ['yellow', 'green', 'blue', 'purple'].map(difficulty => 
+        puzzleData.groups.find(group => group.difficulty === difficulty)
+    ).filter(Boolean);
+    
+    orderedGroups.forEach((group, index) => {
+        const difficultyInfo = difficultyLevels[group.difficulty];
         
         html += `
     <div class="group ${group.difficulty}">
-        <h3>${difficultyEmoji} ${group.theme}</h3>
-        <p><strong>Words:</strong> ${group.words.join(', ')}</p>
-        <p><strong>Hint:</strong> ${group.hint}</p>
+        <h3>${difficultyInfo.emoji} ${difficultyInfo.name}: ${group.theme}</h3>
+        <div class="words">Words: ${group.words.join(', ')}</div>
+        <div class="hint">💡 Hint: ${group.hint}</div>
+        <p>This ${difficultyInfo.description} connects words that ${group.hint.toLowerCase()}.</p>
     </div>`;
     });
     
     html += `
-    <h2>All Words</h2>
-    <p>${puzzleData.words.join(', ')}</p>
+    <div class="tips">
+        <h2>🧩 How to Solve NYT Connections</h2>
+        <p>NYT Connections is a daily word puzzle where you need to find groups of four words that share something in common. Here are some tips:</p>
+        <ul>
+            <li><strong>Start with obvious connections:</strong> Look for clear categories like colors, animals, or professions</li>
+            <li><strong>Watch for wordplay:</strong> Purple categories often involve puns, word parts, or clever connections</li>
+            <li><strong>Eliminate red herrings:</strong> Some words might seem to fit multiple categories</li>
+            <li><strong>Use process of elimination:</strong> If you're sure about three words, the fourth often becomes clear</li>
+        </ul>
+    </div>
+
+    <h2>📝 All 16 Words</h2>
+    <p>Today's puzzle featured these 16 words: <strong>${puzzleData.words.join(', ')}</strong></p>
     
-    <p><em>Data source: ${puzzleData.source}</em></p>
-    <p><em>Generated: ${new Date().toISOString()}</em></p>
+    <div class="intro">
+        <h2>🎮 About NYT Connections</h2>
+        <p>NYT Connections is a daily word puzzle game by The New York Times. Players must identify four groups of four words that share a common theme. The categories range from straightforward (yellow) to tricky wordplay (purple). Each puzzle has exactly one solution, and you have four mistakes before the game ends.</p>
+        
+        <p>New puzzles are released daily at midnight ET. Come back tomorrow for the next puzzle solution!</p>
+    </div>
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 0.9em;">
+        <p>This solution guide helps players who are stuck or want to check their answers. For the best experience, try solving the puzzle yourself first at <a href="https://www.nytimes.com/games/connections" target="_blank">nytimes.com/games/connections</a>.</p>
+    </footer>
 </body>
 </html>`;
     

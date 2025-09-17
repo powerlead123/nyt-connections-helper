@@ -230,7 +230,7 @@ async function fetchTodayPuzzleData() {
     }
 }
 
-// 生成文章HTML
+// 生成SEO优化的文章HTML内容
 function generateArticleHTML(puzzleData, date) {
     const dateObj = new Date(date);
     const formattedDate = dateObj.toLocaleDateString('en-US', {
@@ -240,168 +240,100 @@ function generateArticleHTML(puzzleData, date) {
         day: 'numeric'
     });
     
-    const difficultyColors = {
-        yellow: '🟡',
-        green: '🟢',
-        blue: '🔵',
-        purple: '🟣'
+    const shortDate = dateObj.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    
+    // 生成更丰富的SEO内容
+    const difficultyLevels = {
+        'yellow': { name: 'Yellow (Easiest)', emoji: '🟡', description: 'straightforward category' },
+        'green': { name: 'Green (Easy)', emoji: '🟢', description: 'moderately easy category' },
+        'blue': { name: 'Blue (Medium)', emoji: '🔵', description: 'challenging category' },
+        'purple': { name: 'Purple (Hardest)', emoji: '🟣', description: 'most difficult category' }
     };
     
-    const difficultyNames = {
-        yellow: 'Yellow (Easiest)',
-        green: 'Green (Easy)',
-        blue: 'Blue (Hard)',
-        purple: 'Purple (Hardest)'
-    };
+    // 按难度顺序排序
+    const orderedGroups = ['yellow', 'green', 'blue', 'purple'].map(difficulty => 
+        puzzleData.groups.find(group => group.difficulty === difficulty)
+    ).filter(Boolean);
     
     let groupsHTML = '';
-    
-    puzzleData.groups.forEach((group, index) => {
-        const emoji = difficultyColors[group.difficulty] || '⚪';
-        const difficultyName = difficultyNames[group.difficulty] || group.difficulty;
+    orderedGroups.forEach((group, index) => {
+        const difficultyInfo = difficultyLevels[group.difficulty];
         
         groupsHTML += `
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-3">
-                ${emoji} ${group.theme} 
-                <span class="text-sm font-normal text-gray-600">(${difficultyName})</span>
-            </h3>
-            <div class="mb-4">
-                <h4 class="font-semibold text-gray-700 mb-2">Words:</h4>
-                <div class="flex flex-wrap gap-2">
-                    ${group.words.map(word => `<span class="bg-gray-100 px-3 py-1 rounded-full text-sm font-medium">${word}</span>`).join('')}
-                </div>
-            </div>
-            <div class="mb-4">
-                <h4 class="font-semibold text-gray-700 mb-2">Explanation:</h4>
-                <p class="text-gray-600">${group.hint || `These words are all related to "${group.theme}".`}</p>
-            </div>
+        <div class="group ${group.difficulty}">
+            <h3>${difficultyInfo.emoji} ${difficultyInfo.name}: ${group.theme}</h3>
+            <div class="words">Words: ${group.words.join(', ')}</div>
+            <div class="hint">💡 Hint: ${group.hint}</div>
+            <p>This ${difficultyInfo.description} connects words that ${group.hint.toLowerCase()}.</p>
         </div>`;
     });
     
-    return `<!DOCTYPE html>
+    let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NYT Connections ${formattedDate} - Answers & Solutions</title>
-    <meta name="description" content="Complete solutions and answers for NYT Connections puzzle on ${formattedDate}. Get hints, explanations, and strategies for today's word grouping challenge.">
-    <meta name="keywords" content="NYT Connections, ${date}, answers, solutions, hints, puzzle, word grouping, New York Times">
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="NYT Connections ${formattedDate} - Complete Solutions">
-    <meta property="og:description" content="Find all answers and explanations for today's NYT Connections puzzle. Get detailed hints for each group.">
+    <title>NYT Connections ${shortDate} - Complete Answers, Hints & Solutions</title>
+    <meta name="description" content="Find all answers and hints for NYT Connections puzzle ${shortDate}. Complete solutions with explanations for all four categories: ${puzzleData.groups.map(g => g.theme).join(', ')}.">
+    <meta name="keywords" content="NYT Connections, New York Times Connections, ${shortDate}, puzzle answers, word game, daily puzzle, hints, solutions">
+    <meta property="og:title" content="NYT Connections ${shortDate} - Complete Solutions">
+    <meta property="og:description" content="Complete answers and hints for today's NYT Connections puzzle with detailed explanations.">
     <meta property="og:type" content="article">
-    
-    <!-- Schema.org structured data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": "NYT Connections ${formattedDate} - Answers & Solutions",
-        "description": "Complete solutions for NYT Connections puzzle on ${formattedDate}",
-        "datePublished": "${date}T06:00:00Z",
-        "author": {
-            "@type": "Organization",
-            "name": "NYT Connections Helper"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "NYT Connections Helper"
-        }
-    }
-    </script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        .group { margin: 20px 0; padding: 15px; border-radius: 8px; border-left: 4px solid; }
+        .yellow { background-color: #fff9c4; border-left-color: #eab308; }
+        .green { background-color: #dcfce7; border-left-color: #16a34a; }
+        .blue { background-color: #dbeafe; border-left-color: #2563eb; }
+        .purple { background-color: #f3e8ff; border-left-color: #9333ea; }
+        .words { font-weight: bold; font-size: 1.1em; margin: 10px 0; }
+        .hint { font-style: italic; color: #666; }
+        .intro { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .tips { background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                NYT Connections ${formattedDate}
-            </h1>
-            <p class="text-gray-600">Complete Answers, Hints & Solutions</p>
-            <div class="mt-4">
-                <a href="/" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors mr-2">
-                    Play Today's Puzzle
-                </a>
-                <a href="/articles" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                    All Solutions
-                </a>
-            </div>
-        </header>
-        
-        <!-- Quick Summary -->
-        <div class="bg-blue-50 rounded-lg p-6 mb-8">
-            <h2 class="text-xl font-bold text-blue-800 mb-3">🎯 Quick Summary</h2>
-            <p class="text-blue-700">
-                Today's Connections puzzle features ${puzzleData.groups.length} themed groups with varying difficulty levels. 
-                The categories range from straightforward associations to clever wordplay that might catch you off guard.
-            </p>
-        </div>
-        
-        <!-- Complete Answers -->
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Complete Answers</h2>
-            ${groupsHTML}
-        </div>
-        
-        <!-- Strategy Tips -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">💡 Strategy Tips</h2>
-            <ul class="list-disc list-inside space-y-2 text-gray-700">
-                <li>Start with the most obvious connections first - look for clear categories</li>
-                <li>Consider multiple meanings of words - they might have unexpected connections</li>
-                <li>Think about wordplay, puns, and less obvious relationships</li>
-                <li>Yellow groups are usually the easiest, purple groups often involve wordplay</li>
-                <li>Don't be afraid to shuffle words around to see new patterns</li>
-                <li>If you're stuck, take a break and come back with fresh eyes</li>
-            </ul>
-        </div>
-        
-        <!-- About Section -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">🎮 About NYT Connections</h2>
-            <p class="text-gray-700 mb-4">
-                Connections is a daily word puzzle game by The New York Times. Players must find groups of four words 
-                that share something in common. Each puzzle has exactly four groups, and each group has a different 
-                difficulty level indicated by color.
-            </p>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div class="text-center">
-                    <div class="text-2xl mb-1">🟡</div>
-                    <div class="font-semibold">Yellow</div>
-                    <div class="text-gray-600">Easiest</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl mb-1">🟢</div>
-                    <div class="font-semibold">Green</div>
-                    <div class="text-gray-600">Easy</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl mb-1">🔵</div>
-                    <div class="font-semibold">Blue</div>
-                    <div class="text-gray-600">Hard</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl mb-1">🟣</div>
-                    <div class="font-semibold">Purple</div>
-                    <div class="text-gray-600">Hardest</div>
-                </div>
-            </div>
-        </div>
-    </div>
+<body>
+    <h1>NYT Connections ${formattedDate} - Complete Answers & Solutions</h1>
     
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6 mt-12">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2025 NYT Connections Helper. This site is not affiliated with The New York Times.</p>
-            <p class="text-sm text-gray-400 mt-2">
-                Visit <a href="https://www.nytimes.com/games/connections" class="text-blue-400 hover:underline">NYT Games</a> 
-                to play the official puzzle.
-            </p>
-        </div>
+    <div class="intro">
+        <p>Welcome to today's NYT Connections puzzle solution! Below you'll find all the answers, hints, and explanations for the ${shortDate} puzzle. Each group is color-coded by difficulty level, from yellow (easiest) to purple (hardest).</p>
+    </div>
+
+    <h2>🎯 Complete Solutions by Difficulty</h2>`;
+    
+    html += groupsHTML;
+    
+    html += `
+    <div class="tips">
+        <h2>🧩 How to Solve NYT Connections</h2>
+        <p>NYT Connections is a daily word puzzle where you need to find groups of four words that share something in common. Here are some tips:</p>
+        <ul>
+            <li><strong>Start with obvious connections:</strong> Look for clear categories like colors, animals, or professions</li>
+            <li><strong>Watch for wordplay:</strong> Purple categories often involve puns, word parts, or clever connections</li>
+            <li><strong>Eliminate red herrings:</strong> Some words might seem to fit multiple categories</li>
+            <li><strong>Use process of elimination:</strong> If you're sure about three words, the fourth often becomes clear</li>
+        </ul>
+    </div>
+
+    <h2>📝 All 16 Words</h2>
+    <p>Today's puzzle featured these 16 words: <strong>${puzzleData.words.join(', ')}</strong></p>
+    
+    <div class="intro">
+        <h2>🎮 About NYT Connections</h2>
+        <p>NYT Connections is a daily word puzzle game by The New York Times. Players must identify four groups of four words that share a common theme. The categories range from straightforward (yellow) to tricky wordplay (purple). Each puzzle has exactly one solution, and you have four mistakes before the game ends.</p>
+        
+        <p>New puzzles are released daily at midnight ET. Come back tomorrow for the next puzzle solution!</p>
+    </div>
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 0.9em;">
+        <p>This solution guide helps players who are stuck or want to check their answers. For the best experience, try solving the puzzle yourself first at <a href="https://www.nytimes.com/games/connections" target="_blank">nytimes.com/games/connections</a>.</p>
     </footer>
 </body>
 </html>`;
+    
+    return html;
 }
