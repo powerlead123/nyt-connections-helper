@@ -398,6 +398,7 @@ function parseMashableHTML(html, dateStr) {
             console.log('🎉 完美逻辑解析成功!');
             return {
                 date: dateStr,
+                timestamp: new Date().toISOString(),
                 words: groups.flatMap(g => g.words),
                 groups: groups,
                 source: 'Mashable (Perfect Logic - Cron Trigger)'
@@ -419,6 +420,7 @@ function getBackupPuzzle() {
     
     return {
         date: today,
+        timestamp: new Date().toISOString(),
         words: ['NET', 'SNARE', 'TANGLE', 'WEB', 'CUP', 'KETTLE', 'TEABAG', 'WATER', 'DIAMOND', 'NAILS', 'ROCK', 'STEEL', 'CANTAB', 'CYBERSPACE', 'ICECAPS', 'MAKESHIFT'],
         groups: [
             {
