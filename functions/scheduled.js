@@ -111,18 +111,48 @@ async function scrapeAndUpdateData(env) {
             
             // 存储到 KV
             if (env.CONNECTIONS_KV) {
-                await env.CONNECTIONS_KV.put(`puzzle-${today}`, JSON.stringify(puzzleData), {
-                    expirationTtl: 86400 // 24小时过期
-                });
-                console.log('✅ 数据已保存到KV存储');
+                try {
+                    await env.CONNECTIONS_KV.put(`puzzle-${today}`, JSON.stringify(puzzleData), {
+                        expirationTtl: 86400 // 24小时过期
+                    });
+                    console.log('✅ 数据已保存到KV存储');
+                    
+                    // 验证存储
+                    const stored = await env.CONNECTIONS_KV.get(`puzzle-${today}`, 'json');
+                    console.log('✅ KV存储验证:', stored ? '成功' : '失败');
+                    
+                    return {
+                        success: true,
+                        date: today,
+                        source: puzzleData.source,
+                        wordsCount: puzzleData.words.length,
+                        kvStored: !!stored,
+                        data: puzzleData
+                    };
+                } catch (kvError) {
+                    console.error('❌ KV存储失败:', kvError);
+                    return {
+                        success: true,
+                        date: today,
+                        source: puzzleData.source,
+                        wordsCount: puzzleData.words.length,
+                        kvStored: false,
+                        kvError: kvError.message,
+                        data: puzzleData
+                    };
+                }
+            } else {
+                console.log('❌ CONNECTIONS_KV 绑定不存在');
+                return {
+                    success: true,
+                    date: today,
+                    source: puzzleData.source,
+                    wordsCount: puzzleData.words.length,
+                    kvStored: false,
+                    kvError: 'CONNECTIONS_KV binding not found',
+                    data: puzzleData
+                };
             }
-            
-            return {
-                success: true,
-                date: today,
-                source: puzzleData.source,
-                wordsCount: puzzleData.words.length
-            };
         }
         
         return { success: false, reason: 'No puzzle data found' };
