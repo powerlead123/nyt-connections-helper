@@ -4,14 +4,14 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    
+
     if (request.method !== 'POST') {
       return new Response('Method not allowed', { status: 405 });
     }
 
     try {
       console.log('=== KV 存储直接测试 ===');
-      
+
       const testResults = {
         timestamp: new Date().toISOString(),
         tests: {},
@@ -43,11 +43,11 @@ export default {
           timestamp: new Date().toISOString(),
           message: 'KV write test successful'
         };
-        
+
         await env.CONNECTIONS_KV.put(testKey, JSON.stringify(testData));
         console.log('✅ KV 写入测试成功');
         testResults.tests.writeTest = { success: true, key: testKey };
-        
+
         // 测试 3: 立即读取刚写入的数据
         console.log('3. 测试 KV 读取...');
         const readData = await env.CONNECTIONS_KV.get(testKey);
@@ -55,7 +55,7 @@ export default {
           const parsed = JSON.parse(readData);
           console.log('✅ KV 读取测试成功');
           testResults.tests.readTest = { success: true, data: parsed };
-          
+
           // 清理测试数据
           await env.CONNECTIONS_KV.delete(testKey);
           console.log('✅ KV 删除测试成功');
@@ -64,7 +64,7 @@ export default {
           console.log('❌ KV 读取测试失败');
           testResults.tests.readTest = { success: false };
         }
-        
+
       } catch (writeError) {
         console.log('❌ KV 写入测试失败:', writeError.message);
         testResults.tests.writeTest = { success: false, error: writeError.message };
@@ -78,8 +78,8 @@ export default {
           date: today,
           timestamp: new Date().toISOString(),
           source: 'KV Storage Test - Simulated Cron Trigger',
-          words: ['TEST1', 'TEST2', 'TEST3', 'TEST4', 'TEST5', 'TEST6', 'TEST7', 'TEST8', 
-                  'TEST9', 'TEST10', 'TEST11', 'TEST12', 'TEST13', 'TEST14', 'TEST15', 'TEST16'],
+          words: ['TEST1', 'TEST2', 'TEST3', 'TEST4', 'TEST5', 'TEST6', 'TEST7', 'TEST8',
+            'TEST9', 'TEST10', 'TEST11', 'TEST12', 'TEST13', 'TEST14', 'TEST15', 'TEST16'],
           groups: [
             {
               theme: 'Test Group 1',
@@ -88,7 +88,7 @@ export default {
               hint: 'This is a test group 1'
             },
             {
-              theme: 'Test Group 2', 
+              theme: 'Test Group 2',
               words: ['TEST5', 'TEST6', 'TEST7', 'TEST8'],
               difficulty: 'green',
               hint: 'This is a test group 2'
@@ -96,7 +96,7 @@ export default {
             {
               theme: 'Test Group 3',
               words: ['TEST9', 'TEST10', 'TEST11', 'TEST12'],
-              difficulty: 'blue', 
+              difficulty: 'blue',
               hint: 'This is a test group 3'
             },
             {
@@ -113,7 +113,7 @@ export default {
         await env.CONNECTIONS_KV.put(puzzleKey, JSON.stringify(mockPuzzleData), {
           expirationTtl: 86400 // 24小时过期
         });
-        
+
         console.log('✅ 模拟谜题数据写入成功');
         testResults.tests.simulatedWrite = { success: true, key: puzzleKey };
 
@@ -122,8 +122,8 @@ export default {
         if (savedData) {
           const parsed = JSON.parse(savedData);
           console.log('✅ 模拟数据读取验证成功');
-          testResults.tests.simulatedRead = { 
-            success: true, 
+          testResults.tests.simulatedRead = {
+            success: true,
             dataMatch: parsed.source === mockPuzzleData.source,
             timestamp: parsed.timestamp
           };
@@ -142,7 +142,7 @@ export default {
       try {
         const today = new Date().toISOString().split('T')[0];
         const existingData = await env.CONNECTIONS_KV.get(`puzzle-${today}`);
-        
+
         if (existingData) {
           const parsed = JSON.parse(existingData);
           console.log('✅ 找到现有今日数据');
@@ -165,7 +165,7 @@ export default {
       const allTests = Object.values(testResults.tests);
       const successfulTests = allTests.filter(test => test.success).length;
       const totalTests = allTests.length;
-      
+
       testResults.summary = {
         totalTests,
         successfulTests,
@@ -174,7 +174,7 @@ export default {
       };
 
       console.log(`测试完成: ${successfulTests}/${totalTests} 成功`);
-      
+
       if (testResults.summary.kvWorking) {
         console.log('🎉 KV 存储工作正常！');
       } else {
