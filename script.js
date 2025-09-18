@@ -25,10 +25,21 @@ async function initializePage() {
         initializeGame();
         displayWords();
         setupEventListeners();
-        addAssistantMessage("Ready to tackle today's Connections? Select four words that share something in common, then click Submit! Don't worry - you have unlimited attempts and I'm here to help with hints!");
+        
+        // 根据数据新鲜度给出不同的欢迎消息
+        if (todaysPuzzle.freshness === 'current') {
+            addAssistantMessage("Ready to tackle today's Connections? Select four words that share something in common, then click Submit! Don't worry - you have unlimited attempts and I'm here to help with hints!");
+        } else if (todaysPuzzle.freshness === 'yesterday') {
+            addAssistantMessage("You're playing yesterday's puzzle since today's hasn't been updated yet. New puzzles are available daily after 12:20 PM Beijing time. Ready to play?");
+        } else if (todaysPuzzle.freshness === 'archived') {
+            addAssistantMessage(`You're playing an archived puzzle from ${todaysPuzzle.daysOld} days ago - this is the latest available data. Ready to solve this challenge?`);
+        } else if (todaysPuzzle.freshness === 'backup') {
+            addAssistantMessage("You're seeing sample puzzle data since no real puzzles are available yet. Real puzzles are updated daily at 12:20 PM Beijing time. Try the sample puzzle to get familiar with the game!");
+        }
     } catch (error) {
-        console.error('Failed to load puzzle:', error);
-        addAssistantMessage("Sorry, couldn't load today's puzzle. Please try again later or click the refresh button.");
+        console.error('Unexpected error loading puzzle:', error);
+        // 这种情况现在应该很少发生，因为API总是返回数据
+        addAssistantMessage("There was an unexpected error. Please refresh the page or try again later.");
         showRefreshButton();
     }
 }
@@ -78,12 +89,14 @@ function updatePuzzleDateDisplay() {
     const puzzleStatusElement = document.getElementById('puzzleStatus');
     const puzzleInfoElement = document.getElementById('puzzleInfo');
     
-    if (todaysPuzzle && todaysPuzzle.date) {
-        const puzzleDate = new Date(todaysPuzzle.date);
+    if (todaysPuzzle && todaysPuzzle.actualDate) {
+        const puzzleDate = new Date(todaysPuzzle.actualDate);
         const today = new Date();
         
-        console.log('Puzzle date:', puzzleDate.toDateString());
+        console.log('Actual puzzle date:', puzzleDate.toDateString());
         console.log('Today date:', today.toDateString());
+        console.log('Freshness:', todaysPuzzle.freshness);
+        console.log('Days old:', todaysPuzzle.daysOld);
         
         // Format the date nicely
         const formattedDate = puzzleDate.toLocaleDateString('en-US', {
@@ -96,31 +109,48 @@ function updatePuzzleDateDisplay() {
         console.log('Formatted date:', formattedDate);
         puzzleDateElement.textContent = formattedDate;
         
-        // Check if it's today's puzzle
-        const isToday = puzzleDate.toDateString() === today.toDateString();
-        const isYesterday = puzzleDate.toDateString() === new Date(today.getTime() - 24*60*60*1000).toDateString();
-        
-        console.log('Is today:', isToday);
-        console.log('Is yesterday:', isYesterday);
-        
-        if (isToday) {
-            puzzleStatusElement.textContent = '✅';
-            puzzleInfoElement.textContent = 'Latest puzzle - Updated today!';
-            puzzleInfoElement.className = 'text-sm text-green-600 mt-1';
-        } else if (isYesterday) {
-            puzzleStatusElement.textContent = '⚠️';
-            puzzleInfoElement.textContent = 'Yesterday\'s puzzle - New puzzle may be available';
-            puzzleInfoElement.className = 'text-sm text-yellow-600 mt-1';
-        } else {
-            puzzleStatusElement.textContent = '📅';
-            puzzleInfoElement.textContent = 'Archived puzzle';
-            puzzleInfoElement.className = 'text-sm text-gray-600 mt-1';
+        // 使用新的freshness信息来显示状态
+        switch (todaysPuzzle.freshness) {
+            case 'current':
+                puzzleStatusElement.textContent = '✅';
+                puzzleInfoElement.textContent = 'Latest puzzle - Updated today!';
+                puzzleInfoElement.className = 'text-sm text-green-600 mt-1';
+                break;
+            case 'yesterday':
+                puzzleStatusElement.textContent = '⚠️';
+                puzzleInfoElement.textContent = 'Yesterday\'s puzzle - Today\'s puzzle will be available after 12:20 PM Beijing time';
+                puzzleInfoElement.className = 'text-sm text-yellow-600 mt-1';
+                break;
+            case 'archived':
+                puzzleStatusElement.textContent = '📅';
+                puzzleInfoElement.textContent = `Archived puzzle from ${todaysPuzzle.daysOld} days ago - Latest available data`;
+                puzzleInfoElement.className = 'text-sm text-blue-600 mt-1';
+                break;
+            case 'backup':
+                puzzleStatusElement.textContent = '🔧';
+                puzzleInfoElement.textContent = 'Sample puzzle data - Real puzzles updated daily at 12:20 PM Beijing time';
+                puzzleInfoElement.className = 'text-sm text-orange-600 mt-1';
+                break;
+            default:
+                puzzleStatusElement.textContent = '✅';
+                puzzleInfoElement.textContent = 'Puzzle loaded successfully';
+                puzzleInfoElement.className = 'text-sm text-green-600 mt-1';
         }
         
-        // Update the article link
+        // Update the article link - 使用实际日期
         const articleLink = document.getElementById('todayArticleLink');
         if (articleLink) {
-            articleLink.href = `/api/article/${todaysPuzzle.date}`;
+            articleLink.href = `/api/article/${todaysPuzzle.actualDate}`;
+            
+            // 更新文章链接文本
+            if (todaysPuzzle.freshness === 'backup') {
+                articleLink.textContent = '📚 Sample Guide (No real puzzle available)';
+            } else if (todaysPuzzle.freshness === 'current') {
+                articleLink.textContent = '📚 Read Today\'s Complete Guide';
+            } else {
+                const dateStr = puzzleDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                articleLink.textContent = `📚 Read ${dateStr}'s Complete Guide`;
+            }
         }
     } else {
         puzzleDateElement.textContent = 'Date unavailable';
