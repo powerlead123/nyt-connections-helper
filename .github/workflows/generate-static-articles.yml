@@ -1,0 +1,54 @@
+name: Generate Static Articles
+
+on:
+  schedule:
+    - cron: '30 4 * * *'  # UTC 04:30 = 北京时间 12:30 (数据抓取后10分钟)
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  generate-articles:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+          
+      - name: Generate static articles
+        run: node generate-static-articles-final.js
+        env:
+          CLOUDFLARE_API_URL: https://nyt-connections-helper.pages.dev
+          
+      - name: Check for changes
+        id: verify-changed-files
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Commit and push changes
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add articles/ sitemap.xml
+          git commit -m "Auto-generate static articles $(date -u +%Y-%m-%d)"
+          git push
+          
+      - name: Summary
+        run: |
+          echo "✅ Static article generation completed"
+          echo "📊 Generated files:"
+          ls -la articles/ || echo "No articles directory yet"
+          echo "🗺️ Sitemap updated: $(ls -la sitemap.xml 2>/dev/null || echo 'Not found')"
