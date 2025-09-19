@@ -1,5 +1,6 @@
 name: Generate Static Articles
 
+# 自动生成静态文章的GitHub Actions工作流
 on:
   schedule:
     - cron: '30 4 * * *'  # UTC 04:30 = 北京时间 12:30 (数据抓取后10分钟)
