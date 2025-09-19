@@ -28,13 +28,13 @@ async function initializePage() {
         
         // 根据数据新鲜度给出不同的欢迎消息
         if (todaysPuzzle.freshness === 'current') {
-            addAssistantMessage("Ready to tackle today's Connections? Select four words that share something in common, then click Submit! Don't worry - you have unlimited attempts and I'm here to help with hints!");
+            addAssistantMessage("Ready to tackle the latest Connections puzzle? Select four words that share something in common, then click Submit! Don't worry - you have unlimited attempts and I'm here to help with hints!");
         } else if (todaysPuzzle.freshness === 'yesterday') {
-            addAssistantMessage("You're playing yesterday's puzzle since today's hasn't been updated yet. New puzzles are available daily after 12:20 PM Beijing time. Ready to play?");
+            addAssistantMessage("You're playing the latest available puzzle. New puzzles are updated daily, so check back soon for the newest challenge. Ready to play?");
         } else if (todaysPuzzle.freshness === 'archived') {
-            addAssistantMessage(`You're playing an archived puzzle from ${todaysPuzzle.daysOld} days ago - this is the latest available data. Ready to solve this challenge?`);
+            addAssistantMessage(`You're playing the latest available puzzle from ${todaysPuzzle.daysOld} days ago. Ready to solve this challenge?`);
         } else if (todaysPuzzle.freshness === 'backup') {
-            addAssistantMessage("You're seeing sample puzzle data since no real puzzles are available yet. Real puzzles are updated daily at 12:20 PM Beijing time. Try the sample puzzle to get familiar with the game!");
+            addAssistantMessage("You're seeing sample puzzle data since no real puzzles are available yet. New puzzles are updated daily, so check back soon. Try the sample puzzle to get familiar with the game!");
         }
     } catch (error) {
         console.error('Unexpected error loading puzzle:', error);
@@ -47,7 +47,7 @@ async function initializePage() {
 // Show loading message
 function showLoadingMessage() {
     const wordsGrid = document.getElementById('wordsGrid');
-    wordsGrid.innerHTML = '<div class="col-span-4 text-center text-gray-500">Loading today\'s puzzle...</div>';
+    wordsGrid.innerHTML = '<div class="col-span-4 text-center text-gray-500">Loading latest puzzle...</div>';
     
     // Update date display to show loading
     const puzzleDateElement = document.getElementById('puzzleDate');
@@ -57,11 +57,11 @@ function showLoadingMessage() {
     if (puzzleDateElement) {
         puzzleDateElement.textContent = 'Loading puzzle date...';
         puzzleStatusElement.textContent = '🔄';
-        puzzleInfoElement.textContent = 'Fetching today\'s puzzle...';
+        puzzleInfoElement.textContent = 'Fetching latest puzzle...';
         puzzleInfoElement.className = 'text-sm text-blue-600 mt-1';
     }
     
-    addAssistantMessage("Getting today's latest Connections puzzle for you...");
+    addAssistantMessage("Getting the latest Connections puzzle for you...");
 }
 
 // Load today's puzzle from server
@@ -113,27 +113,27 @@ function updatePuzzleDateDisplay() {
         switch (todaysPuzzle.freshness) {
             case 'current':
                 puzzleStatusElement.textContent = '✅';
-                puzzleInfoElement.textContent = 'Latest puzzle - Updated today!';
+                puzzleInfoElement.textContent = 'Latest puzzle - Updated recently!';
                 puzzleInfoElement.className = 'text-sm text-green-600 mt-1';
                 break;
             case 'yesterday':
                 puzzleStatusElement.textContent = '⚠️';
-                puzzleInfoElement.textContent = 'Yesterday\'s puzzle - Today\'s puzzle will be available after 12:20 PM Beijing time';
+                puzzleInfoElement.textContent = 'Latest available puzzle - New puzzle will be available soon';
                 puzzleInfoElement.className = 'text-sm text-yellow-600 mt-1';
                 break;
             case 'archived':
                 puzzleStatusElement.textContent = '📅';
-                puzzleInfoElement.textContent = `Archived puzzle from ${todaysPuzzle.daysOld} days ago - Latest available data`;
+                puzzleInfoElement.textContent = `Latest available puzzle from ${todaysPuzzle.daysOld} days ago`;
                 puzzleInfoElement.className = 'text-sm text-blue-600 mt-1';
                 break;
             case 'backup':
                 puzzleStatusElement.textContent = '🔧';
-                puzzleInfoElement.textContent = 'Sample puzzle data - Real puzzles updated daily at 12:20 PM Beijing time';
+                puzzleInfoElement.textContent = 'Sample puzzle data - Latest puzzle will be available soon';
                 puzzleInfoElement.className = 'text-sm text-orange-600 mt-1';
                 break;
             default:
                 puzzleStatusElement.textContent = '✅';
-                puzzleInfoElement.textContent = 'Puzzle loaded successfully';
+                puzzleInfoElement.textContent = 'Latest puzzle loaded successfully';
                 puzzleInfoElement.className = 'text-sm text-green-600 mt-1';
         }
         
@@ -146,10 +146,10 @@ function updatePuzzleDateDisplay() {
             if (todaysPuzzle.freshness === 'backup') {
                 articleLink.textContent = '📚 Sample Guide (No real puzzle available)';
             } else if (todaysPuzzle.freshness === 'current') {
-                articleLink.textContent = '📚 Read Today\'s Complete Guide';
+                articleLink.textContent = '📚 Read Complete Solution Guide';
             } else {
                 const dateStr = puzzleDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-                articleLink.textContent = `📚 Read ${dateStr}'s Complete Guide`;
+                articleLink.textContent = `📚 Read ${dateStr} Solution Guide`;
             }
         }
     } else {
