@@ -137,10 +137,10 @@ function updatePuzzleDateDisplay() {
                 puzzleInfoElement.className = 'text-sm text-green-600 mt-1';
         }
         
-        // Update the article link - 使用实际日期
+        // Update the article link - 链接到静态文章页面
         const articleLink = document.getElementById('todayArticleLink');
         if (articleLink) {
-            articleLink.href = `/api/article/${todaysPuzzle.actualDate}`;
+            articleLink.href = `/articles/${todaysPuzzle.actualDate}.html`;
             
             // 更新文章链接文本
             if (todaysPuzzle.freshness === 'backup') {
@@ -701,13 +701,13 @@ function restartGame() {
     addAssistantMessage("Game has been reset! Start the challenge again! Remember, you have unlimited attempts and I'm here to help with hints whenever you need them.");
 }
 
-// 设置今日文章链接
+// 设置今日文章链接 - 指向静态文章页面
 function setTodayArticleLink() {
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
     const articleLink = document.getElementById('todayArticleLink');
     if (articleLink) {
-        articleLink.href = `/api/article/${dateStr}`;
+        articleLink.href = `/articles/${dateStr}.html`;
     }
 }
 
