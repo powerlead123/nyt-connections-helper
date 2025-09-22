@@ -38,7 +38,7 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
           
-      - name: Commit and push changes
+      - name: Commit and push to master
         if: steps.verify-changed-files.outputs.changed == 'true'
         run: |
           git config --local user.email "action@github.com"
