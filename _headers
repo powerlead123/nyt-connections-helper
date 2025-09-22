@@ -1,12 +1,32 @@
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  X-XSS-Protection: 1; mode=block
-  Referrer-Policy: strict-origin-when-cross-origin
-  Cache-Control: public, max-age=3600
+# Cloudflare Pages 缓存策略配置
 
-/api/*
-  Cache-Control: no-cache, no-store, must-revalidate
+# 文章索引页面 - 短缓存时间，确保用户能快速看到新文章
+/articles/
+  Cache-Control: public, max-age=300, s-maxage=300
+  
+/articles/index.html
+  Cache-Control: public, max-age=300, s-maxage=300
 
-/static/*
+# 具体文章页面 - 可以缓存更长时间，因为内容相对稳定
+/articles/*.html
+  Cache-Control: public, max-age=3600, s-maxage=7200
+
+# 主页 - 中等缓存时间
+/
+  Cache-Control: public, max-age=600, s-maxage=600
+  
+/index.html
+  Cache-Control: public, max-age=600, s-maxage=600
+
+# 静态资源 - 长缓存时间
+*.css
+  Cache-Control: public, max-age=31536000, immutable
+  
+*.js
+  Cache-Control: public, max-age=31536000, immutable
+  
+*.png
+  Cache-Control: public, max-age=31536000, immutable
+  
+*.jpg
   Cache-Control: public, max-age=31536000, immutable
