@@ -1,131 +1,71 @@
-// KV 绑定诊断脚本
-// 检查 KV 绑定是否正确配置
+// 调试KV绑定问题
+console.log('🔧 调试KV绑定问题...');
 
-export default {
-  async fetch(request, env) {
+async function debugKVBinding() {
     try {
-      console.log('=== KV 绑定诊断 ===');
-      
-      const diagnostics = {
-        timestamp: new Date().toISOString(),
-        kvBinding: {
-          exists: !!env.CONNECTIONS_KV,
-          type: typeof env.CONNECTIONS_KV
-        },
-        tests: {}
-      };
-      
-      // 测试 1: 检查 KV 绑定是否存在
-      if (env.CONNECTIONS_KV) {
-        console.log('✅ CONNECTIONS_KV 绑定存在');
-        diagnostics.tests.bindingExists = true;
+        console.log('1. 检查scheduled.js的存储逻辑...');
         
-        // 测试 2: 尝试写入测试数据
-        try {
-          const testKey = `test-${Date.now()}`;
-          const testData = { test: true, timestamp: new Date().toISOString() };
-          
-          await env.CONNECTIONS_KV.put(testKey, JSON.stringify(testData));
-          console.log('✅ KV 写入测试成功');
-          diagnostics.tests.writeTest = true;
-          
-          // 测试 3: 尝试读取测试数据
-          const readData = await env.CONNECTIONS_KV.get(testKey);
-          if (readData) {
-            console.log('✅ KV 读取测试成功');
-            diagnostics.tests.readTest = true;
+        // 手动触发抓取，但这次详细查看过程
+        const response = await fetch('https://nyt-connections-helper.pages.dev/scheduled', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'scrape-data',
+                secret: 'your-secret-key-here'
+            })
+        });
+        
+        const data = await response.json();
+        console.log('Scheduled响应:', JSON.stringify(data, null, 2));
+        
+        if (data.result && !data.result.success) {
+            console.log('\n❌ 抓取失败原因:', data.result.reason || data.result.error);
             
-            // 清理测试数据
-            await env.CONNECTIONS_KV.delete(testKey);
-            console.log('✅ KV 删除测试成功');
-            diagnostics.tests.deleteTest = true;
-          } else {
-            console.log('❌ KV 读取测试失败');
-            diagnostics.tests.readTest = false;
-          }
-          
-        } catch (error) {
-          console.log('❌ KV 操作测试失败:', error.message);
-          diagnostics.tests.writeTest = false;
-          diagnostics.tests.error = error.message;
+            if (data.result.reason === 'No real puzzle data found') {
+                console.log('\n🔍 这意味着:');
+                console.log('1. fetchTodaysPuzzleData() 返回了 null');
+                console.log('2. 可能是解析逻辑问题，或者Mashable数据确实有问题');
+                console.log('3. 但我们之前测试过，Mashable是可以访问的');
+                
+                console.log('\n💡 可能的原因:');
+                console.log('- scheduled.js中的解析逻辑与我们测试的不一致');
+                console.log('- 解析逻辑太严格，Green分组缺少单词导致整个解析失败');
+                console.log('- 或者有其他边界情况');
+            }
         }
         
-        // 测试 4: 检查当前谜题数据
-        try {
-          const today = new Date().toISOString().split('T')[0];
-          const currentData = await env.CONNECTIONS_KV.get(`puzzle-${today}`);
-          
-          if (currentData) {
-            const parsed = JSON.parse(currentData);
-            console.log('✅ 找到当前谜题数据');
-            diagnostics.currentPuzzle = {
-              exists: true,
-              date: parsed.date,
-              source: parsed.source,
-              timestamp: parsed.timestamp,
-              wordsCount: parsed.words?.length || 0
-            };
-          } else {
-            console.log('❌ 未找到当前谜题数据');
-            diagnostics.currentPuzzle = { exists: false };
-          }
-        } catch (error) {
-          console.log('❌ 检查当前数据失败:', error.message);
-          diagnostics.currentPuzzle = { exists: false, error: error.message };
+        // 检查是否有任何数据被存储（包括备用数据）
+        console.log('\n2. 检查是否有备用数据被存储...');
+        
+        // 尝试直接访问一些可能的KV键
+        const testDates = ['2025-09-22', '2025-09-21', '2025-09-20'];
+        
+        for (const date of testDates) {
+            try {
+                // 这里我们无法直接访问KV，但可以通过API间接检查
+                console.log(`检查 ${date}...`);
+            } catch (error) {
+                console.log(`${date}: 检查失败`);
+            }
         }
         
-      } else {
-        console.log('❌ CONNECTIONS_KV 绑定不存在');
-        diagnostics.tests.bindingExists = false;
-      }
-      
-      // 测试 5: 尝试手动写入今日数据
-      if (env.CONNECTIONS_KV && diagnostics.tests.writeTest) {
-        try {
-          const today = new Date().toISOString().split('T')[0];
-          const testPuzzleData = {
-            date: today,
-            timestamp: new Date().toISOString(),
-            source: 'KV Binding Test',
-            words: ['TEST1', 'TEST2', 'TEST3', 'TEST4'],
-            groups: [{
-              theme: 'Test Group',
-              words: ['TEST1', 'TEST2', 'TEST3', 'TEST4'],
-              difficulty: 'yellow',
-              hint: 'This is a test'
-            }]
-          };
-          
-          await env.CONNECTIONS_KV.put(`puzzle-${today}`, JSON.stringify(testPuzzleData));
-          console.log('✅ 手动写入今日测试数据成功');
-          diagnostics.tests.manualWrite = true;
-          
-        } catch (error) {
-          console.log('❌ 手动写入失败:', error.message);
-          diagnostics.tests.manualWrite = false;
-        }
-      }
-      
-      return new Response(JSON.stringify(diagnostics, null, 2), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-      
+        console.log('\n3. 分析问题...');
+        console.log('根据之前的测试，我们知道:');
+        console.log('- Mashable网站可以访问 ✅');
+        console.log('- 页面内容存在 ✅');
+        console.log('- 但Green分组只有3个单词 ❌');
+        console.log('- scheduled.js的解析逻辑要求每个分组必须有4个单词 ❌');
+        console.log('');
+        console.log('💡 解决方案:');
+        console.log('1. 修改scheduled.js中的解析逻辑，允许某个分组只有3个单词');
+        console.log('2. 或者添加容错机制');
+        console.log('3. 或者临时存储不完整的数据，总比没有数据好');
+        
     } catch (error) {
-      console.error('诊断失败:', error);
-      return new Response(JSON.stringify({
-        error: 'Diagnostic failed',
-        message: error.message,
-        stack: error.stack
-      }, null, 2), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
+        console.log('❌ 调试失败:', error.message);
     }
-  }
-};
+}
+
+debugKVBinding();
