@@ -11,7 +11,7 @@
 /articles/*.html
   Cache-Control: public, max-age=3600, s-maxage=7200
 
-# 主页 - 中等缓存时间
+# 主页 - 中等缓存时间，平衡性能与实时性
 /
   Cache-Control: public, max-age=600, s-maxage=600
   
