@@ -85,46 +85,6 @@ export async function onRequest(context) {
                 }
             });
         }
-
-        // 如果没有找到真实数据，返回备用数据
-        const backupData = {
-            success: true,
-            data: {
-                date: today,
-                categories: [
-                    {
-                        theme: "SAMPLE CATEGORY 1",
-                        words: ["WORD1", "WORD2", "WORD3", "WORD4"],
-                        difficulty: 1
-                    },
-                    {
-                        theme: "SAMPLE CATEGORY 2", 
-                        words: ["WORD5", "WORD6", "WORD7", "WORD8"],
-                        difficulty: 2
-                    },
-                    {
-                        theme: "SAMPLE CATEGORY 3",
-                        words: ["WORD9", "WORD10", "WORD11", "WORD12"],
-                        difficulty: 3
-                    },
-                    {
-                        theme: "SAMPLE CATEGORY 4",
-                        words: ["WORD13", "WORD14", "WORD15", "WORD16"],
-                        difficulty: 4
-                    }
-                ],
-                source: 'Backup Data (No puzzle available)',
-                message: 'This is sample data. Real puzzle data is updated daily at 12:20 PM Beijing time.'
-            };
-            
-            return new Response(JSON.stringify(backupData), {
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Cache-Control': 'public, max-age=300' // 备用数据5分钟缓存
-                }
-            });
-        }
         
     } catch (error) {
         console.error('Today API error:', error);
