@@ -114,7 +114,7 @@ async function scrapeAndUpdateData(env) {
             if (env.CONNECTIONS_KV) {
                 try {
                     await env.CONNECTIONS_KV.put(`puzzle-${today}`, JSON.stringify(puzzleData), {
-                        expirationTtl: 86400 // 24小时过期
+                        expirationTtl: 86400 * 30 // 30天过期
                     });
                     console.log('✅ 数据已保存到KV存储');
                     
