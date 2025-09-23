@@ -84,6 +84,33 @@ export async function onRequest(context) {
                     'Cache-Control': 'public, max-age=300' // 5分钟缓存，更频繁检查
                 }
             });
+        }
+
+        // 如果没有找到真实数据，返回备用数据
+        const backupData = {
+            success: true,
+            data: {
+                date: today,
+                categories: [
+                    {
+                        theme: "SAMPLE CATEGORY 1",
+                        words: ["WORD1", "WORD2", "WORD3", "WORD4"],
+                        difficulty: 1
+                    },
+                    {
+                        theme: "SAMPLE CATEGORY 2", 
+                        words: ["WORD5", "WORD6", "WORD7", "WORD8"],
+                        difficulty: 2
+                    },
+                    {
+                        theme: "SAMPLE CATEGORY 3",
+                        words: ["WORD9", "WORD10", "WORD11", "WORD12"],
+                        difficulty: 3
+                    },
+                    {
+                        theme: "SAMPLE CATEGORY 4",
+                        words: ["WORD13", "WORD14", "WORD15", "WORD16"],
+                        difficulty: 4
                     }
                 ],
                 source: 'Backup Data (No puzzle available)',
