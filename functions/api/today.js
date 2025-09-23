@@ -20,8 +20,8 @@ export async function onRequest(context) {
                 } else {
                     console.log('今日数据不存在，尝试获取最新可用数据...');
                     
-                    // 2. 如果今天没有数据，尝试获取最近7天的数据
-                    for (let daysBack = 1; daysBack <= 7; daysBack++) {
+                    // 2. 如果今天没有数据，尝试获取最近30天的数据
+                    for (let daysBack = 1; daysBack <= 30; daysBack++) {
                         const checkDate = new Date();
                         checkDate.setDate(checkDate.getDate() - daysBack);
                         const dateStr = checkDate.toISOString().split('T')[0];
@@ -40,7 +40,7 @@ export async function onRequest(context) {
             }
         }
         
-        // 只返回真实数据，不使用备用数据
+        // 只返回真实数据，绝不返回备用数据
         if (puzzleData && !puzzleData.source?.includes('Backup')) {
             // 添加元数据信息
             const isToday = actualDate === today;
@@ -64,18 +64,19 @@ export async function onRequest(context) {
                 }
             });
         } else {
-            // 如果没有找到真实数据，返回明确的无数据状态
-            console.log('没有找到任何真实数据');
+            // 如果没有找到任何数据，返回友好的提示信息
+            console.log('没有找到任何可用数据');
             return new Response(JSON.stringify({
                 success: false,
-                error: 'No real puzzle data available',
-                message: 'Today\'s puzzle has not been published yet. Please check back later.',
+                error: 'No puzzle data available',
+                message: 'No puzzle data found in the last 30 days. The system may be initializing or experiencing issues. Please try the manual refresh or check back later.',
                 requestedDate: today,
                 actualDate: null,
                 isToday: false,
                 daysOld: null,
                 freshness: 'unavailable',
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                suggestion: 'Try using the refresh button or check back in a few hours.'
             }), {
                 status: 200, // 仍然返回200，但success: false
                 headers: { 
