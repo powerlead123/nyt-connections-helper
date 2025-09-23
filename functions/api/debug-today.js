@@ -56,6 +56,37 @@ export async function onRequest(context) {
             console.log('Debug: 是否包含Backup =', puzzleData.source?.includes('Backup'));
         }
         
+        // 如果找到的数据是备用数据，尝试查找历史真实数据
+        if (puzzleData && puzzleData.source?.includes('Backup')) {
+            console.log('Debug: 发现备用数据，尝试查找历史真实数据...');
+            
+            // 查找最近30天的真实数据
+            for (let daysBack = 1; daysBack <= 30; daysBack++) {
+                const checkDate = new Date();
+                checkDate.setDate(checkDate.getDate() - daysBack);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                
+                console.log(`Debug: 检查 ${daysBack} 天前的真实数据:`, `puzzle-${dateStr}`);
+                try {
+                    const historicalData = await env.CONNECTIONS_KV.get(`puzzle-${dateStr}`);
+                    if (historicalData) {
+                        const parsedData = JSON.parse(historicalData);
+                        console.log(`Debug: ${dateStr} 数据源:`, parsedData.source);
+                        
+                        // 如果找到真实数据，使用它
+                        if (!parsedData.source?.includes('Backup')) {
+                            puzzleData = parsedData;
+                            actualDate = dateStr;
+                            console.log(`Debug: 使用${daysBack}天前的真实数据 (${dateStr})`);
+                            break;
+                        }
+                    }
+                } catch (error) {
+                    console.log(`Debug: 检查${dateStr}时出错:`, error.message);
+                }
+            }
+        }
+        
         // 只返回真实数据，绝不返回备用数据
         if (puzzleData && !puzzleData.source?.includes('Backup')) {
             console.log('Debug: 数据通过过滤，准备返回');
@@ -76,7 +107,8 @@ export async function onRequest(context) {
                     dataSource: puzzleData.source,
                     actualDate: actualDate,
                     isToday: isToday,
-                    daysOld: daysOld
+                    daysOld: daysOld,
+                    fallbackUsed: actualDate !== today
                 }
             };
             
