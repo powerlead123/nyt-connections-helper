@@ -43,6 +43,9 @@ async function generateStaticArticlesFinal() {
   // 4. 更新文章列表页面和sitemap
   await updateIndexAndSitemap(articlesDir);
   
+  // 5. 更新主页的文章链接
+  await updateHomepageLinks(articlesDir);
+  
   console.log('🎉 高效静态文章生成完成!');
   
   // 5. 显示统计信息
@@ -523,3 +526,64 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export { generateStaticArticlesFinal };
+
+// 更新主页的文章链接
+async function updateHomepageLinks(articlesDir) {
+  console.log('🔗 更新主页文章链接...');
+  
+  try {
+    const indexPath = path.join(__dirname, 'index.html');
+    
+    if (!fs.existsSync(indexPath)) {
+      console.log('⚠️  主页文件不存在，跳过更新');
+      return;
+    }
+    
+    // 获取最新的文章日期
+    const existingFiles = getExistingArticles(articlesDir);
+    const sortedDates = Array.from(existingFiles).sort().reverse();
+    
+    if (sortedDates.length < 2) {
+      console.log('⚠️  文章数量不足，跳过主页更新');
+      return;
+    }
+    
+    const latestDate = sortedDates[0];      // 最新文章
+    const yesterdayDate = sortedDates[1];   // 昨天文章
+    
+    console.log(`  📅 最新文章: ${latestDate}`);
+    console.log(`  📅 昨天文章: ${yesterdayDate}`);
+    
+    // 读取主页内容
+    let homepageContent = fs.readFileSync(indexPath, 'utf8');
+    
+    // 更新 "📚 Read Complete Solution Guide" 链接
+    homepageContent = homepageContent.replace(
+      /href="\/articles\/\d{4}-\d{2}-\d{2}\.html"([^>]*>[\s\S]*?📚 Read Complete Solution Guide)/,
+      `href="/articles/${latestDate}.html"$1`
+    );
+    
+    // 更新 "📄 Latest Solution" 链接
+    homepageContent = homepageContent.replace(
+      /href="\/articles\/\d{4}-\d{2}-\d{2}\.html"([^>]*>[\s\S]*?📄 Latest Solution)/,
+      `href="/articles/${latestDate}.html"$1`
+    );
+    
+    // 更新 "📅 Yesterday's" 链接
+    homepageContent = homepageContent.replace(
+      /href="\/articles\/\d{4}-\d{2}-\d{2}\.html"([^>]*>[\s\S]*?📅 Yesterday's)/,
+      `href="/articles/${yesterdayDate}.html"$1`
+    );
+    
+    // 写回文件
+    fs.writeFileSync(indexPath, homepageContent, 'utf8');
+    
+    console.log('  ✅ 主页链接更新完成');
+    console.log(`    📚 Complete Solution Guide → ${latestDate}`);
+    console.log(`    📄 Latest Solution → ${latestDate}`);
+    console.log(`    📅 Yesterday's → ${yesterdayDate}`);
+    
+  } catch (error) {
+    console.error('❌ 更新主页链接失败:', error.message);
+  }
+}
