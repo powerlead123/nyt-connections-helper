@@ -40,8 +40,8 @@ export async function onRequest(context) {
             }
         }
         
-        // 总是返回数据，不返回404
-        if (puzzleData) {
+        // 只返回真实数据，不使用备用数据
+        if (puzzleData && !puzzleData.source?.includes('Backup')) {
             // 添加元数据信息
             const isToday = actualDate === today;
             const daysOld = Math.floor((new Date(today) - new Date(actualDate)) / (1000 * 60 * 60 * 24));
@@ -52,7 +52,8 @@ export async function onRequest(context) {
                 requestedDate: today,
                 isToday: isToday,
                 daysOld: daysOld,
-                freshness: isToday ? 'current' : daysOld === 1 ? 'yesterday' : 'archived'
+                freshness: isToday ? 'current' : daysOld === 1 ? 'yesterday' : 'archived',
+                success: true
             };
             
             return new Response(JSON.stringify(responseData), {
@@ -63,41 +64,26 @@ export async function onRequest(context) {
                 }
             });
         } else {
-            // 如果完全没有数据，返回友好的备用数据
-            console.log('没有找到任何可用数据，返回备用数据');
-            const backupData = {
-                date: today,
-                actualDate: today,
+            // 如果没有找到真实数据，返回明确的无数据状态
+            console.log('没有找到任何真实数据');
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'No real puzzle data available',
+                message: 'Today\'s puzzle has not been published yet. Please check back later.',
                 requestedDate: today,
-                isToday: true,
-                daysOld: 0,
-                freshness: 'backup',
-                timestamp: new Date().toISOString(),
-                words: ['SAMPLE', 'DEMO', 'TEST', 'EXAMPLE', 'WORD', 'PUZZLE', 'GAME', 'PLAY', 'HINT', 'CLUE', 'SOLVE', 'THINK', 'GROUP', 'CONNECT', 'MATCH', 'FIND'],
-                groups: [
-                    {
-                        theme: 'Sample Category 1',
-                        words: ['SAMPLE', 'DEMO', 'TEST', 'EXAMPLE'],
-                        difficulty: 'yellow',
-                        hint: 'These are all example words'
-                    },
-                    {
-                        theme: 'Sample Category 2', 
-                        words: ['WORD', 'PUZZLE', 'GAME', 'PLAY'],
-                        difficulty: 'green',
-                        hint: 'Related to word games'
-                    },
-                    {
-                        theme: 'Sample Category 3',
-                        words: ['HINT', 'CLUE', 'SOLVE', 'THINK'],
-                        difficulty: 'blue', 
-                        hint: 'Things you do when solving puzzles'
-                    },
-                    {
-                        theme: 'Sample Category 4',
-                        words: ['GROUP', 'CONNECT', 'MATCH', 'FIND'],
-                        difficulty: 'purple',
-                        hint: 'Actions in the Connections game'
+                actualDate: null,
+                isToday: false,
+                daysOld: null,
+                freshness: 'unavailable',
+                timestamp: new Date().toISOString()
+            }), {
+                status: 200, // 仍然返回200，但success: false
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': 'public, max-age=300' // 5分钟缓存，更频繁检查
+                }
+            });
                     }
                 ],
                 source: 'Backup Data (No puzzle available)',

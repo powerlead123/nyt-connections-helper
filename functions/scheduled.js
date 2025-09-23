@@ -106,7 +106,8 @@ async function scrapeAndUpdateData(env) {
         // 获取今日谜题数据
         const puzzleData = await fetchTodaysPuzzleData();
         
-        if (puzzleData) {
+        // 只存储真实数据，不存储备用数据
+        if (puzzleData && !puzzleData.source?.includes('Backup')) {
             const today = new Date().toISOString().split('T')[0];
             
             // 存储到 KV
@@ -153,9 +154,18 @@ async function scrapeAndUpdateData(env) {
                     data: puzzleData
                 };
             }
+        } else if (puzzleData && puzzleData.source?.includes('Backup')) {
+            // 如果是备用数据，不存储到KV，只记录日志
+            console.log('⚠️ 获取到备用数据，不存储到KV');
+            return {
+                success: false,
+                reason: 'Only backup data available, not storing to KV',
+                source: puzzleData.source,
+                date: new Date().toISOString().split('T')[0]
+            };
         }
         
-        return { success: false, reason: 'No puzzle data found' };
+        return { success: false, reason: 'No real puzzle data found' };
         
     } catch (error) {
         console.error('Scrape data error:', error);
@@ -207,21 +217,25 @@ async function generateDailyArticle(env) {
     }
 }
 
-// 获取今日谜题数据 - 使用完美逻辑
+// 获取今日谜题数据 - 只返回真实数据
 async function fetchTodaysPuzzleData() {
     try {
         console.log('🎯 使用完美抓取逻辑');
         
         // 尝试从Mashable获取
         const mashableData = await fetchFromMashable();
-        if (mashableData) return mashableData;
+        if (mashableData) {
+            console.log('✅ 成功获取真实数据');
+            return mashableData;
+        }
         
-        // 返回备用数据
-        return getBackupPuzzle();
+        // 如果抓取失败，不返回备用数据
+        console.log('❌ 抓取失败，不返回备用数据');
+        return null;
         
     } catch (error) {
         console.error('Fetch puzzle data error:', error);
-        return getBackupPuzzle();
+        return null;
     }
 }
 

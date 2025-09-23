@@ -37,9 +37,30 @@ async function initializePage() {
             addAssistantMessage("You're seeing sample puzzle data since no real puzzles are available yet. New puzzles are updated daily, so check back soon. Try the sample puzzle to get familiar with the game!");
         }
     } catch (error) {
-        console.error('Unexpected error loading puzzle:', error);
-        // 这种情况现在应该很少发生，因为API总是返回数据
-        addAssistantMessage("There was an unexpected error. Please refresh the page or try again later.");
+        console.error('Error loading puzzle:', error);
+        
+        // 显示无数据状态
+        const puzzleDateElement = document.getElementById('puzzleDate');
+        const puzzleStatusElement = document.getElementById('puzzleStatus');
+        const puzzleInfoElement = document.getElementById('puzzleInfo');
+        
+        puzzleDateElement.textContent = 'No puzzle available';
+        puzzleStatusElement.textContent = '❌';
+        puzzleInfoElement.textContent = 'Today\'s puzzle has not been published yet. Please check back later.';
+        puzzleInfoElement.className = 'text-sm text-red-600 mt-1';
+        
+        // 隐藏游戏区域
+        const wordsGrid = document.getElementById('wordsGrid');
+        wordsGrid.innerHTML = '<div class="col-span-4 text-center text-gray-500 p-8">Today\'s puzzle is not available yet. Please check back later when the new puzzle is published.</div>';
+        
+        // 禁用游戏按钮
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('deselectBtn').disabled = true;
+        document.getElementById('shuffleBtn').disabled = true;
+        
+        addAssistantMessage("Sorry, today's puzzle hasn't been published yet. New puzzles are typically available after midnight ET. Please check back later!");
+        
+        // 显示刷新按钮
         showRefreshButton();
     }
 }
@@ -72,10 +93,19 @@ async function loadTodaysPuzzle() {
         throw new Error('Unable to fetch puzzle data');
     }
     
-    todaysPuzzle = await response.json();
-    console.log('Today\'s puzzle loaded successfully:', todaysPuzzle);
-    console.log('Puzzle date:', todaysPuzzle.date);
+    const data = await response.json();
+    
+    // 检查是否有真实数据
+    if (!data.success) {
+        console.log('No real puzzle data available:', data.message);
+        throw new Error(data.message || 'No puzzle data available');
+    }
+    
+    todaysPuzzle = data;
+    console.log('Puzzle loaded successfully:', todaysPuzzle);
+    console.log('Puzzle date:', todaysPuzzle.actualDate);
     console.log('Puzzle source:', todaysPuzzle.source);
+    console.log('Days old:', todaysPuzzle.daysOld);
     console.log('First few words:', todaysPuzzle.words?.slice(0, 4));
     
     // Update puzzle date display
