@@ -167,10 +167,9 @@ function updatePuzzleDateDisplay() {
                 puzzleInfoElement.className = 'text-sm text-green-600 mt-1';
         }
         
-        // Update the article link - 链接到静态文章页面
-        const articleLink = document.getElementById('todayArticleLink');
-        if (articleLink) {
-            articleLink.href = `/articles/${todaysPuzzle.actualDate}.html`;
+        // Update the article link - 使用智能链接策略
+        // 在游戏数据加载后重新检查最新文章
+        setSmartArticleLinks();
             
             // 更新文章链接文本
             if (todaysPuzzle.freshness === 'backup') {
@@ -731,14 +730,75 @@ function restartGame() {
     addAssistantMessage("Game has been reset! Start the challenge again! Remember, you have unlimited attempts and I'm here to help with hints whenever you need them.");
 }
 
-// 设置今日文章链接 - 指向静态文章页面
-function setTodayArticleLink() {
+// 智能设置文章链接 - 指向最新可用的静态文章
+async function setSmartArticleLinks() {
     const today = new Date();
-    const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // 检查今天的文章是否存在
+    let latestArticleDate = todayStr;
+    
+    try {
+        const todayArticleResponse = await fetch(`/articles/${todayStr}.html`, { method: 'HEAD' });
+        
+        if (!todayArticleResponse.ok) {
+            // 今天的文章不存在，查找最新可用的文章
+            console.log('今天的文章不存在，查找最新可用的文章...');
+            
+            // 检查最近7天的文章
+            for (let daysBack = 1; daysBack <= 7; daysBack++) {
+                const checkDate = new Date();
+                checkDate.setDate(checkDate.getDate() - daysBack);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                
+                const articleResponse = await fetch(`/articles/${dateStr}.html`, { method: 'HEAD' });
+                if (articleResponse.ok) {
+                    latestArticleDate = dateStr;
+                    console.log(`找到最新文章: ${dateStr}`);
+                    break;
+                }
+            }
+        } else {
+            console.log('今天的文章存在，使用今天的文章');
+        }
+    } catch (error) {
+        console.log('检查文章时出错，使用今天的日期:', error.message);
+    }
+    
+    // 更新主要的文章链接
     const articleLink = document.getElementById('todayArticleLink');
     if (articleLink) {
-        articleLink.href = `/articles/${dateStr}.html`;
+        articleLink.href = `/articles/${latestArticleDate}.html`;
+        
+        // 更新链接文本以反映日期
+        if (latestArticleDate === todayStr) {
+            articleLink.textContent = '📚 Read Complete Solution Guide';
+        } else {
+            const linkDate = new Date(latestArticleDate);
+            const dateStr = linkDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+            articleLink.textContent = `📚 Read ${dateStr} Solution Guide`;
+        }
     }
+    
+    // 更新 "Latest Solution" 按钮链接
+    const latestSolutionLink = document.getElementById('latestSolutionLink');
+    if (latestSolutionLink) {
+        latestSolutionLink.href = `/articles/${latestArticleDate}.html`;
+        
+        // 更新按钮文本
+        if (latestArticleDate === todayStr) {
+            latestSolutionLink.innerHTML = '📄 Latest Solution';
+        } else {
+            const linkDate = new Date(latestArticleDate);
+            const dateStr = linkDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            latestSolutionLink.innerHTML = `📄 ${dateStr} Solution`;
+        }
+    }
+}
+
+// 兼容性：保留旧函数名
+function setTodayArticleLink() {
+    setSmartArticleLinks();
 }
 
 // 检查管理员模式
@@ -790,5 +850,5 @@ function toggleAdminMode() {
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     initializePage();
-    setTodayArticleLink();
+    setSmartArticleLinks();
 });
