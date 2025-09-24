@@ -170,17 +170,6 @@ function updatePuzzleDateDisplay() {
         // Update the article link - 使用智能链接策略
         // 在游戏数据加载后重新检查最新文章
         setSmartArticleLinks();
-            
-            // 更新文章链接文本
-            if (todaysPuzzle.freshness === 'backup') {
-                articleLink.textContent = '📚 Sample Guide (No real puzzle available)';
-            } else if (todaysPuzzle.freshness === 'current') {
-                articleLink.textContent = '📚 Read Complete Solution Guide';
-            } else {
-                const dateStr = puzzleDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-                articleLink.textContent = `📚 Read ${dateStr} Solution Guide`;
-            }
-        }
     } else {
         puzzleDateElement.textContent = 'Date unavailable';
         puzzleStatusElement.textContent = '❓';
